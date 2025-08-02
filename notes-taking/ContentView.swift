@@ -27,6 +27,10 @@ struct ContentView: View {
                 .padding()
             }
 
+            Spacer().frame(height: 30)
+
+            HistoryNotes().padding()
+
             Spacer()
         }
 
