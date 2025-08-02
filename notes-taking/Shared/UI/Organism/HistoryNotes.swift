@@ -13,6 +13,10 @@ struct HistoryNotes: View {
             HStack {
                 Text("Últimas notas")
                 Spacer()
+                Image(systemName: "plus")
+                    .font(.title3)
+                    .foregroundColor(.gray)
+                    .padding()
             }
 
             ScrollView(.vertical, showsIndicators: false) {
