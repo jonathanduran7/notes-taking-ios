@@ -16,6 +16,9 @@ struct TopBar : View {
                 .font(.headline)
                 .padding()
             Spacer()
-        }.frame(maxWidth: .infinity).background(Color.gray.opacity(0.2))
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.gray.opacity(0.2))
+        .shadow(radius: 10)
     }
 }
