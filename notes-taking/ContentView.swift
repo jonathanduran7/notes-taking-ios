@@ -12,6 +12,8 @@ struct ContentView: View {
     var body: some View {
         VStack{
             TopBar(title: "Mis Notas")
+
+            SearchBar()
             
             Spacer()
         }
