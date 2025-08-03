@@ -12,7 +12,7 @@ import SwiftData
 class HomeViewModel {
     
     // MARK: - Dependencies
-    private var modelContext: ModelContext?
+    private var repository: DataRepositoryProtocol?
     private var router: AppRouter?
     
     // MARK: - Data Queries
@@ -61,48 +61,42 @@ class HomeViewModel {
     init() {}
     
     // MARK: - Configuration
-    func configure(with context: ModelContext, router: AppRouter) {
-        self.modelContext = context
+    func configure(with repository: DataRepositoryProtocol, router: AppRouter) {
+        self.repository = repository
         self.router = router
-        fetchData()
+        Task {
+            await fetchData()
+        }
     }
     
     // MARK: - Data Management
-    func fetchData() {
-        fetchCategories()
-        fetchNotes()
+    func fetchData() async {
+        await fetchCategories()
+        await fetchNotes()
     }
     
-    private func fetchCategories() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para fetchCategories")
+    private func fetchCategories() async {
+        guard let repository = repository else {
+            print("Repository no configurado para fetchCategories")
             return
         }
         
-        let categoriesDescriptor = FetchDescriptor<Category>(
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        
         do {
-            _categories = try modelContext.fetch(categoriesDescriptor)
+            _categories = try await repository.fetchCategories()
         } catch {
             print("❌ Error fetching categories: \(error)")
             _categories = []
         }
     }
     
-    private func fetchNotes() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para fetchNotes")
+    private func fetchNotes() async {
+        guard let repository = repository else {
+            print("Repository no configurado para fetchNotes")
             return
         }
         
-        let notesDescriptor = FetchDescriptor<Notes>(
-            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
-        )
-        
         do {
-            _allNotes = try modelContext.fetch(notesDescriptor)
+            _allNotes = try await repository.fetchNotes()
         } catch {
             print("❌ Error fetching notes: \(error)")
             _allNotes = []
@@ -123,6 +117,19 @@ class HomeViewModel {
     func clearSearch() {
         searchText = ""
         isSearching = false
+    }
+    
+    func performAsyncSearch(_ searchText: String) async -> [Notes] {
+        guard let repository = repository else {
+            return []
+        }
+        
+        do {
+            return try await repository.searchNotes(containing: searchText)
+        } catch {
+            print("❌ Error performing async search: \(error)")
+            return []
+        }
     }
     
     // MARK: - Navigation

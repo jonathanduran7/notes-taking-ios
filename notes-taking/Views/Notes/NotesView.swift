@@ -9,10 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct NotesView: View {
-    @Environment(\.modelContext) private var modelContext
-    
-    // MARK: - Dependencies
-    let router: AppRouter
+    @Environment(\.dependencies) private var dependencies
     
     // MARK: - ViewModel
     @State private var viewModel = NotesViewModel()
@@ -39,7 +36,7 @@ struct NotesView: View {
         }
         .onAppear {
             print("📝 Pestaña Notas cargada")
-            viewModel.configure(with: modelContext, router: router)
+            viewModel.configure(with: dependencies.repository, router: dependencies.router)
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
@@ -291,5 +288,6 @@ struct NotesView: View {
 }
 
 #Preview {
-    NotesView(router: AppRouter.preview)
+    NotesView()
+        .dependencies(DependencyContainer.preview)
 }

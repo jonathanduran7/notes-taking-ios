@@ -12,7 +12,7 @@ import SwiftData
 class CategoriesViewModel {
     
     // MARK: - Dependencies
-    private var modelContext: ModelContext?
+    private var repository: DataRepositoryProtocol?
     private var router: AppRouter?
     
     // MARK: - Data Queries
@@ -45,25 +45,23 @@ class CategoriesViewModel {
     init() {}
     
     // MARK: - Configuration
-    func configure(with context: ModelContext, router: AppRouter) {
-        self.modelContext = context
+    func configure(with repository: DataRepositoryProtocol, router: AppRouter) {
+        self.repository = repository
         self.router = router
-        fetchData()
+        Task {
+            await fetchData()
+        }
     }
     
     // MARK: - Data Management
-    func fetchData() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para fetchData")
+    func fetchData() async {
+        guard let repository = repository else {
+            print("Repository no configurado para fetchData")
             return
         }
         
-        let categoriesDescriptor = FetchDescriptor<Category>(
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        
         do {
-            _categories = try modelContext.fetch(categoriesDescriptor)
+            _categories = try await repository.fetchCategories()
         } catch {
             print("❌ Error fetching categories: \(error)")
             _categories = []
@@ -100,8 +98,8 @@ class CategoriesViewModel {
     // MARK: - CRUD Operations
     
     func createCategory() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para createCategory")
+        guard let repository = repository else {
+            print("Repository no configurado para createCategory")
             return
         }
         
@@ -111,22 +109,20 @@ class CategoriesViewModel {
             return
         }
         
-        let newCategory = Category(name: trimmedName)
-        modelContext.insert(newCategory)
-        
-        do {
-            try modelContext.save()
-            print("✅ Categoría '\(trimmedName)' creada exitosamente")
-            fetchData()
-            clearNewCategoryForm()
-        } catch {
-            print("❌ Error al crear categoría: \(error)")
+        Task {
+            do {
+                _ = try await repository.createCategory(name: trimmedName)
+                await fetchData()
+                clearNewCategoryForm()
+            } catch {
+                print("❌ Error al crear categoría: \(error)")
+            }
         }
     }
     
     func updateCategory() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para updateCategory")
+        guard let repository = repository else {
+            print("Repository no configurado para updateCategory")
             return
         }
         
@@ -141,21 +137,20 @@ class CategoriesViewModel {
             return
         }
         
-        category.updateName(trimmedName)
-        
-        do {
-            try modelContext.save()
-            print("✅ Categoría actualizada a '\(trimmedName)'")
-            fetchData()
-            cancelEdit()
-        } catch {
-            print("❌ Error al actualizar categoría: \(error)")
+        Task {
+            do {
+                try await repository.updateCategory(category, newName: trimmedName)
+                await fetchData()
+                cancelEdit()
+            } catch {
+                print("❌ Error al actualizar categoría: \(error)")
+            }
         }
     }
     
     func deleteCategory() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para deleteCategory")
+        guard let repository = repository else {
+            print("Repository no configurado para deleteCategory")
             return
         }
         
@@ -164,16 +159,14 @@ class CategoriesViewModel {
             return
         }
         
-        let categoryName = category.name
-        modelContext.delete(category)
-        
-        do {
-            try modelContext.save()
-            print("✅ Categoría '\(categoryName)' eliminada exitosamente")
-            fetchData()
-            cancelDelete()
-        } catch {
-            print("❌ Error al eliminar categoría: \(error)")
+        Task {
+            do {
+                try await repository.deleteCategory(category)
+                await fetchData()
+                cancelDelete()
+            } catch {
+                print("❌ Error al eliminar categoría: \(error)")
+            }
         }
     }
     

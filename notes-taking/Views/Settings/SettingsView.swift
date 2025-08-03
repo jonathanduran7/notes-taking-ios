@@ -9,10 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct SettingsView: View {
-    @Environment(\.modelContext) private var modelContext
-    
-    // MARK: - Dependencies
-    let router: AppRouter
+    @Environment(\.dependencies) private var dependencies
     
     // MARK: - ViewModel
     @State private var viewModel = SettingsViewModel()
@@ -44,7 +41,7 @@ struct SettingsView: View {
         }
         .onAppear {
             print("⚙️ Pestaña Ajustes cargada")
-            viewModel.configure(with: modelContext, router: router)
+            viewModel.configure(with: dependencies.repository, router: dependencies.router)
         }
         // Alerts de confirmación
         .alert("Eliminar Categorías", isPresented: $showingDeleteCategoriesAlert) {
@@ -274,5 +271,6 @@ struct DangerButton: View {
 }
 
 #Preview {
-    SettingsView(router: AppRouter.preview)
+    SettingsView()
+        .dependencies(DependencyContainer.preview)
 }

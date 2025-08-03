@@ -12,7 +12,7 @@ import SwiftData
 class NotesViewModel {
     
     // MARK: - Dependencies
-    private var modelContext: ModelContext?
+    private var repository: DataRepositoryProtocol?
     private var router: AppRouter?
     
     // MARK: - Data Queries
@@ -48,38 +48,27 @@ class NotesViewModel {
     init() {}
 
     // MARK: - Configuration
-    func configure(with context: ModelContext, router: AppRouter) {
-        self.modelContext = context
+    func configure(with repository: DataRepositoryProtocol, router: AppRouter) {
+        self.repository = repository
         self.router = router
-        fetchData()
+        Task {
+            await fetchData()
+        }
     }
     
     // MARK: - Data Management
-    func fetchData() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para fetchData")
+    func fetchData() async {
+        guard let repository = repository else {
+            print("Repository no configurado para fetchData")
             return
         }
-
-        let notesDescriptor = FetchDescriptor<Notes>(
-            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
-        )
         
         do {
-            _notes = try modelContext.fetch(notesDescriptor)
+            _notes = try await repository.fetchNotes()
+            _categories = try await repository.fetchCategories()
         } catch {
-            print("❌ Error fetching notes: \(error)")
+            print("❌ Error fetching data: \(error)")
             _notes = []
-        }
-        
-        let categoriesDescriptor = FetchDescriptor<Category>(
-            sortBy: [SortDescriptor(\.name)]
-        )
-        
-        do {
-            _categories = try modelContext.fetch(categoriesDescriptor)
-        } catch {
-            print("❌ Error fetching categories: \(error)")
             _categories = []
         }
     }
@@ -114,8 +103,8 @@ class NotesViewModel {
     // MARK: - CRUD Operations
     
     func createNote() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para createNote")
+        guard let repository = repository else {
+            print("Repository no configurado para createNote")
             return
         }
         
@@ -125,27 +114,24 @@ class NotesViewModel {
             return
         }
         
-        let newNote = Notes(
-            title: trimmedTitle,
-            content: formContent,
-            category: selectedCategory
-        )
-        
-        modelContext.insert(newNote)
-        
-        do {
-            try modelContext.save()
-            print("✅ Nota '\(trimmedTitle)' creada exitosamente")
-            fetchData()
-            clearForm()
-        } catch {
-            print("❌ Error al crear nota: \(error)")
+        Task {
+            do {
+                _ = try await repository.createNote(
+                    title: trimmedTitle,
+                    content: formContent,
+                    category: selectedCategory
+                )
+                await fetchData()
+                clearForm()
+            } catch {
+                print("❌ Error al crear nota: \(error)")
+            }
         }
     }
     
     func updateNote() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para updateNote")
+        guard let repository = repository else {
+            print("Repository no configurado para updateNote")
             return
         }
         
@@ -160,25 +146,25 @@ class NotesViewModel {
             return
         }
         
-        note.update(
-            title: trimmedTitle,
-            content: formContent,
-            category: selectedCategory
-        )
-        
-        do {
-            try modelContext.save()
-            print("✅ Nota '\(trimmedTitle)' actualizada exitosamente")
-            fetchData()
-            cancelEdit()
-        } catch {
-            print("❌ Error al actualizar nota: \(error)")
+        Task {
+            do {
+                try await repository.updateNote(
+                    note,
+                    title: trimmedTitle,
+                    content: formContent,
+                    category: selectedCategory
+                )
+                await fetchData()
+                cancelEdit()
+            } catch {
+                print("❌ Error al actualizar nota: \(error)")
+            }
         }
     }
     
     func deleteNote() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para deleteNote")
+        guard let repository = repository else {
+            print("Repository no configurado para deleteNote")
             return
         }
         
@@ -187,16 +173,14 @@ class NotesViewModel {
             return
         }
         
-        let noteTitle = note.title
-        modelContext.delete(note)
-        
-        do {
-            try modelContext.save()
-            print("✅ Nota '\(noteTitle)' eliminada exitosamente")
-            fetchData()
-            cancelDelete()
-        } catch {
-            print("❌ Error al eliminar nota: \(error)")
+        Task {
+            do {
+                try await repository.deleteNote(note)
+                await fetchData()
+                cancelDelete()
+            } catch {
+                print("❌ Error al eliminar nota: \(error)")
+            }
         }
     }
     

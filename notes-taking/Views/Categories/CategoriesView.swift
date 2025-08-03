@@ -9,10 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct CategoriesView: View {
-    @Environment(\.modelContext) private var modelContext
-    
-    // MARK: - Dependencies
-    let router: AppRouter
+    @Environment(\.dependencies) private var dependencies
     
     // MARK: - ViewModel
     @State private var viewModel = CategoriesViewModel()
@@ -37,7 +34,7 @@ struct CategoriesView: View {
         }
         .onAppear {
             print("📁 Pestaña Categorías cargada")
-            viewModel.configure(with: modelContext, router: router)
+            viewModel.configure(with: dependencies.repository, router: dependencies.router)
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
@@ -225,5 +222,6 @@ struct CategoriesView: View {
 }
 
 #Preview {
-    CategoriesView(router: AppRouter.preview)
+    CategoriesView()
+        .dependencies(DependencyContainer.preview)
 }
