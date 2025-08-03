@@ -14,6 +14,7 @@ struct notes_takingApp: App {
         let schema = Schema([
             Item.self,
             Category.self,
+            Notes.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
