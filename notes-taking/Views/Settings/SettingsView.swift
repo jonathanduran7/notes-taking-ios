@@ -44,8 +44,10 @@ struct SettingsView: View {
             viewModel.configure(with: dependencies.repository, router: dependencies.router)
         }
         // Alerts de confirmación
-        .alert("Eliminar Categorías", isPresented: $showingDeleteCategoriesAlert) {
+        .alert("⚠️ Eliminar Categorías", isPresented: $showingDeleteCategoriesAlert) {
             deleteCategoriesAlert
+        } message: {
+            Text("Esta acción también eliminará todas las notas relacionadas con estas categorías. No se puede deshacer.")
         }
         .alert("Eliminar Notas", isPresented: $showingDeleteNotesAlert) {
             deleteNotesAlert
