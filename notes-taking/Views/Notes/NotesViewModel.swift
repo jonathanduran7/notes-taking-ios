@@ -12,7 +12,7 @@ import SwiftData
 class NotesViewModel {
     
     // MARK: - Dependencies
-    private var modelContext: ModelContext
+    private var modelContext: ModelContext?
     
     // MARK: - Data Queries
     private var _notes: [Notes] = []
@@ -44,13 +44,21 @@ class NotesViewModel {
     }
     
     // MARK: - Initialization
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    init() {}
+
+    // MARK: - Configuration
+    func configure(with context: ModelContext) {
+        self.modelContext = context
         fetchData()
     }
     
     // MARK: - Data Management
     func fetchData() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para fetchData")
+            return
+        }
+
         let notesDescriptor = FetchDescriptor<Notes>(
             sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
         )
@@ -104,6 +112,11 @@ class NotesViewModel {
     // MARK: - CRUD Operations
     
     func createNote() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para createNote")
+            return
+        }
+        
         let trimmedTitle = formTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
             print("⚠️ Cannot create note: title is empty")
@@ -129,6 +142,11 @@ class NotesViewModel {
     }
     
     func updateNote() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para updateNote")
+            return
+        }
+        
         guard let note = noteToEdit else {
             print("⚠️ Cannot update: no note selected for editing")
             return
@@ -157,6 +175,11 @@ class NotesViewModel {
     }
     
     func deleteNote() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para deleteNote")
+            return
+        }
+        
         guard let note = noteToDelete else {
             print("⚠️ Cannot delete: no note selected for deletion")
             return

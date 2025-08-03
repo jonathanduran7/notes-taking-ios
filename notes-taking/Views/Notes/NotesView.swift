@@ -12,18 +12,13 @@ struct NotesView: View {
     @Environment(\.modelContext) private var modelContext
     
     // MARK: - ViewModel
-    @State private var viewModel: NotesViewModel
+    @State private var viewModel = NotesViewModel()
     
     // MARK: - UI State
     @State private var showingAddSheet = false
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
-    
-    // MARK: - Initialization
-    init() {
-        self._viewModel = State(initialValue: NotesViewModel(modelContext: ModelContext(try! ModelContainer(for: Notes.self, Category.self))))
-    }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -41,7 +36,7 @@ struct NotesView: View {
         }
         .onAppear {
             print("📝 Pestaña Notas cargada")
-            viewModel = NotesViewModel(modelContext: modelContext)
+            viewModel.configure(with: modelContext)
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
