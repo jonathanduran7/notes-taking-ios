@@ -12,17 +12,12 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     
     // MARK: - ViewModel
-    @State private var viewModel: SettingsViewModel
+    @State private var viewModel = SettingsViewModel()
     
     // MARK: - UI State
     @State private var showingDeleteCategoriesAlert = false
     @State private var showingDeleteNotesAlert = false
     @State private var showingDeleteAllAlert = false
-    
-    // MARK: - Initialization
-    init() {
-        self._viewModel = State(initialValue: SettingsViewModel(modelContext: ModelContext(try! ModelContainer(for: Category.self, Notes.self))))
-    }
     
     var body: some View {
         NavigationView {
@@ -46,7 +41,7 @@ struct SettingsView: View {
         }
         .onAppear {
             print("⚙️ Pestaña Ajustes cargada")
-            viewModel = SettingsViewModel(modelContext: modelContext)
+            viewModel.configure(with: modelContext)
         }
         // Alerts de confirmación
         .alert("Eliminar Categorías", isPresented: $showingDeleteCategoriesAlert) {

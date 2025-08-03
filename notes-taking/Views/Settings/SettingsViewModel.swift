@@ -12,7 +12,7 @@ import SwiftData
 class SettingsViewModel {
     
     // MARK: - Dependencies
-    private var modelContext: ModelContext
+    private var modelContext: ModelContext?
     
     // MARK: - Data Queries
     private var _categories: [Category] = []
@@ -43,8 +43,11 @@ class SettingsViewModel {
     }
     
     // MARK: - Initialization
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    init() {}
+    
+    // MARK: - Configuration
+    func configure(with context: ModelContext) {
+        self.modelContext = context
         fetchData()
     }
     
@@ -55,6 +58,11 @@ class SettingsViewModel {
     }
     
     private func fetchCategories() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para fetchCategories")
+            return
+        }
+        
         let categoriesDescriptor = FetchDescriptor<Category>()
         
         do {
@@ -66,6 +74,11 @@ class SettingsViewModel {
     }
     
     private func fetchNotes() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para fetchNotes")
+            return
+        }
+        
         let notesDescriptor = FetchDescriptor<Notes>()
         
         do {
@@ -79,6 +92,11 @@ class SettingsViewModel {
     // MARK: - Delete Operations
     
     func deleteAllCategories() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para deleteAllCategories")
+            return
+        }
+        
         let count = categories.count
         
         for category in categories {
@@ -95,6 +113,11 @@ class SettingsViewModel {
     }
     
     func deleteAllNotes() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para deleteAllNotes")
+            return
+        }
+        
         let count = notes.count
         
         for note in notes {
@@ -111,6 +134,11 @@ class SettingsViewModel {
     }
     
     func deleteEverything() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para deleteEverything")
+            return
+        }
+        
         let categoryCount = categories.count
         let noteCount = notes.count
         
