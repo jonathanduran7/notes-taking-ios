@@ -13,6 +13,7 @@ class CategoriesViewModel {
     
     // MARK: - Dependencies
     private var modelContext: ModelContext?
+    private var router: AppRouter?
     
     // MARK: - Data Queries
     private var _categories: [Category] = []
@@ -44,8 +45,9 @@ class CategoriesViewModel {
     init() {}
     
     // MARK: - Configuration
-    func configure(with context: ModelContext) {
+    func configure(with context: ModelContext, router: AppRouter) {
         self.modelContext = context
+        self.router = router
         fetchData()
     }
     

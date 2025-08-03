@@ -11,6 +11,9 @@ import SwiftData
 struct CategoriesView: View {
     @Environment(\.modelContext) private var modelContext
     
+    // MARK: - Dependencies
+    let router: AppRouter
+    
     // MARK: - ViewModel
     @State private var viewModel = CategoriesViewModel()
     
@@ -34,7 +37,7 @@ struct CategoriesView: View {
         }
         .onAppear {
             print("📁 Pestaña Categorías cargada")
-            viewModel.configure(with: modelContext)
+            viewModel.configure(with: modelContext, router: router)
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
@@ -222,5 +225,5 @@ struct CategoriesView: View {
 }
 
 #Preview {
-    CategoriesView()
+    CategoriesView(router: AppRouter.preview)
 }

@@ -11,6 +11,9 @@ import SwiftData
 struct NotesView: View {
     @Environment(\.modelContext) private var modelContext
     
+    // MARK: - Dependencies
+    let router: AppRouter
+    
     // MARK: - ViewModel
     @State private var viewModel = NotesViewModel()
     
@@ -36,7 +39,7 @@ struct NotesView: View {
         }
         .onAppear {
             print("📝 Pestaña Notas cargada")
-            viewModel.configure(with: modelContext)
+            viewModel.configure(with: modelContext, router: router)
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
@@ -288,5 +291,5 @@ struct NotesView: View {
 }
 
 #Preview {
-    NotesView()
+    NotesView(router: AppRouter.preview)
 }
