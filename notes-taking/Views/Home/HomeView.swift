@@ -27,12 +27,13 @@ struct HomeView: View {
                         Cards(category: category)
                     }
                 }
-                .padding()
+                .padding(.horizontal)
             }
 
-            Spacer().frame(height: 30)
+            Spacer().frame(height: 10)
 
-            HistoryNotes().padding()
+            HistoryNotes()
+                .padding(.horizontal)
 
             Spacer()
         }
