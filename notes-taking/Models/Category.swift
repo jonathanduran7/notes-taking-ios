@@ -27,3 +27,29 @@ final class Category {
         self.updatedAt = Date()
     }
 }
+
+@Model
+final class Notes {
+    var id: UUID
+    var title: String
+    var content: String
+    var createdAt: Date
+    var updatedAt: Date
+    var category: Category?
+    
+    init(title: String, content: String, category: Category? = nil) {
+        self.id = UUID()
+        self.title = title
+        self.content = content
+        self.category = category
+        self.createdAt = Date()
+        self.updatedAt = Date()
+    }
+    
+    func update(title: String, content: String, category: Category?) {
+        self.title = title
+        self.content = content
+        self.category = category
+        self.updatedAt = Date()
+    }
+}
