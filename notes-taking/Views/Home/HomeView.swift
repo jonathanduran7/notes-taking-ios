@@ -23,6 +23,7 @@ struct HomeView: View {
             }
             .padding(.horizontal)
             .padding(.top, 8)
+            .disabledWhileLoading(viewModel.loadingManager)
             
             if viewModel.isSearching {
                 searchResultsView
@@ -30,9 +31,13 @@ struct HomeView: View {
                 homeContentView
             }
         }
+        .loadingOverlay(viewModel.loadingManager, operation: .fetch)
         .onAppear {
             print("Pestaña Home cargada")
             viewModel.configure(with: dependencies.repository, router: dependencies.router)
+        }
+        .refreshable {
+            await viewModel.refreshData()
         }
     }
     
@@ -95,7 +100,9 @@ struct HomeView: View {
                 
                 Spacer()
                 
-                if viewModel.hasSearchResults {
+                if viewModel.loadingManager.isLoading(.search) {
+                    LoadingIndicator(operation: .search)
+                } else if viewModel.hasSearchResults {
                     Text(viewModel.getSearchResultsCountText())
                         .font(.caption)
                         .foregroundColor(.gray)
@@ -108,11 +115,49 @@ struct HomeView: View {
             .padding(.horizontal)
             .padding(.top, 16)
             
-            if !viewModel.hasSearchResults {
+            // Content based on search state
+            if viewModel.loadingManager.isLoading(.search) {
+                searchLoadingView
+            } else if let errorMessage = viewModel.loadingManager.getState(for: .search).errorMessage {
+                searchErrorView(errorMessage)
+            } else if !viewModel.hasSearchResults {
                 emptySearchView
             } else {
                 searchResultsList
             }
+        }
+    }
+    
+    // MARK: - Search Loading View
+    private var searchLoadingView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            
+            InlineLoadingView(
+                operation: .search,
+                message: "Buscando en todas las notas..."
+            )
+            .padding()
+            
+            Spacer()
+        }
+    }
+    
+    // MARK: - Search Error View
+    private func searchErrorView(_ errorMessage: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+            
+            ErrorView(
+                message: errorMessage
+            ) {
+                Task {
+                    _ = await viewModel.performAsyncSearch(viewModel.searchText)
+                }
+            }
+            .padding()
+            
+            Spacer()
         }
     }
     
