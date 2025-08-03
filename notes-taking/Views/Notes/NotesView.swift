@@ -34,9 +34,13 @@ struct NotesView: View {
             }
             .navigationBarHidden(true)
         }
+        .loadingOverlay(viewModel.loadingManager, operation: .fetch)
         .onAppear {
             print("📝 Pestaña Notas cargada")
             viewModel.configure(with: dependencies.repository, router: dependencies.router)
+        }
+        .refreshable {
+            await viewModel.refreshData()
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
@@ -255,23 +259,33 @@ struct NotesView: View {
             
             Spacer()
             
+            // Loading indicator during operations
+            if viewModel.loadingManager.isLoading(.create) || viewModel.loadingManager.isLoading(.update) {
+                InlineLoadingView(
+                    operation: viewModel.loadingManager.isLoading(.create) ? .create : .update,
+                    message: viewModel.loadingManager.isLoading(.create) ? "Creando nota..." : "Guardando cambios..."
+                )
+            }
+            
             // Botones
             VStack(spacing: 12) {
                 PrimaryButton(
                     title: primaryButtonTitle,
                     action: primaryAction,
-                    isEnabled: viewModel.isFormValid
+                    isEnabled: viewModel.isFormValid && !viewModel.loadingManager.isAnyLoading()
                 )
                 
                 SecondaryButton(title: "Cancelar") {
                     secondaryAction()
                 }
+                .disabled(viewModel.loadingManager.isAnyLoading())
             }
         }
         .padding()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarHidden(false)
+        .disabledWhileLoading(viewModel.loadingManager)
     }
     
     // MARK: - Delete Alert
