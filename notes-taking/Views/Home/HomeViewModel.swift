@@ -15,6 +15,9 @@ class HomeViewModel {
     private var repository: DataRepositoryProtocol?
     private var router: AppRouter?
     
+    // MARK: - Loading States
+    let loadingManager = LoadingManager()
+    
     // MARK: - Data Queries
     private var _categories: [Category] = []
     private var _allNotes: [Notes] = []
@@ -71,36 +74,32 @@ class HomeViewModel {
     
     // MARK: - Data Management
     func fetchData() async {
-        await fetchCategories()
-        await fetchNotes()
-    }
-    
-    private func fetchCategories() async {
         guard let repository = repository else {
-            print("Repository no configurado para fetchCategories")
+            print("Repository no configurado para fetchData")
             return
         }
         
+        loadingManager.startLoading(.fetch)
+        
         do {
-            _categories = try await repository.fetchCategories()
+            // Fetch both categories and notes in parallel
+            async let categoriesResult = repository.fetchCategories()
+            async let notesResult = repository.fetchNotes()
+            
+            _categories = try await categoriesResult
+            _allNotes = try await notesResult
+            
+            loadingManager.finishLoading(.fetch, success: true)
         } catch {
-            print("❌ Error fetching categories: \(error)")
+            print("❌ Error fetching data: \(error)")
             _categories = []
+            _allNotes = []
+            loadingManager.handleError(error, for: .fetch)
         }
     }
     
-    private func fetchNotes() async {
-        guard let repository = repository else {
-            print("Repository no configurado para fetchNotes")
-            return
-        }
-        
-        do {
-            _allNotes = try await repository.fetchNotes()
-        } catch {
-            print("❌ Error fetching notes: \(error)")
-            _allNotes = []
-        }
+    func refreshData() async {
+        await fetchData()
     }
     
     // MARK: - Search Management
@@ -124,12 +123,15 @@ class HomeViewModel {
             return []
         }
         
-        do {
-            return try await repository.searchNotes(containing: searchText)
-        } catch {
-            print("❌ Error performing async search: \(error)")
+        guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return []
         }
+        
+        let result = await loadingManager.performOperation(.search) {
+            try await repository.searchNotes(containing: searchText)
+        }
+        
+        return result ?? []
     }
     
     // MARK: - Navigation
