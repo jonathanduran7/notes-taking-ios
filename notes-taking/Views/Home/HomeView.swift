@@ -9,10 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
-    @Environment(\.modelContext) private var modelContext
-    
-    // MARK: - Dependencies
-    let router: AppRouter
+    @Environment(\.dependencies) private var dependencies
     
     // MARK: - ViewModel
     @State private var viewModel = HomeViewModel()
@@ -35,7 +32,7 @@ struct HomeView: View {
         }
         .onAppear {
             print("Pestaña Home cargada")
-            viewModel.configure(with: modelContext, router: router)
+            viewModel.configure(with: dependencies.repository, router: dependencies.router)
         }
     }
     
@@ -79,7 +76,7 @@ struct HomeView: View {
             Spacer().frame(height: 24)
             
             // Últimas notas
-            HistoryNotes(router: router)
+            HistoryNotes(router: dependencies.router)
                 .padding(.horizontal)
             
             Spacer()
@@ -269,5 +266,6 @@ struct SearchResultItem: View {
 }
 
 #Preview {
-    HomeView(router: AppRouter.preview)
+    HomeView()
+        .dependencies(DependencyContainer.preview)
 }
