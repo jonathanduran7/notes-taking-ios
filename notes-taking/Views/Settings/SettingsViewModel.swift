@@ -12,7 +12,7 @@ import SwiftData
 class SettingsViewModel {
     
     // MARK: - Dependencies
-    private var modelContext: ModelContext?
+    private var repository: DataRepositoryProtocol?
     private var router: AppRouter?
     
     // MARK: - Data Queries
@@ -47,46 +47,27 @@ class SettingsViewModel {
     init() {}
     
     // MARK: - Configuration
-    func configure(with context: ModelContext, router: AppRouter) {
-        self.modelContext = context
+    func configure(with repository: DataRepositoryProtocol, router: AppRouter) {
+        self.repository = repository
         self.router = router
-        fetchData()
+        Task {
+            await fetchData()
+        }
     }
     
     // MARK: - Data Management
-    func fetchData() {
-        fetchCategories()
-        fetchNotes()
-    }
-    
-    private func fetchCategories() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para fetchCategories")
+    func fetchData() async {
+        guard let repository = repository else {
+            print("Repository no configurado para fetchData")
             return
         }
         
-        let categoriesDescriptor = FetchDescriptor<Category>()
-        
         do {
-            _categories = try modelContext.fetch(categoriesDescriptor)
+            _categories = try await repository.fetchCategories()
+            _notes = try await repository.fetchNotes()
         } catch {
-            print("❌ Error fetching categories: \(error)")
+            print("❌ Error fetching data: \(error)")
             _categories = []
-        }
-    }
-    
-    private func fetchNotes() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para fetchNotes")
-            return
-        }
-        
-        let notesDescriptor = FetchDescriptor<Notes>()
-        
-        do {
-            _notes = try modelContext.fetch(notesDescriptor)
-        } catch {
-            print("❌ Error fetching notes: \(error)")
             _notes = []
         }
     }
@@ -94,72 +75,53 @@ class SettingsViewModel {
     // MARK: - Delete Operations
     
     func deleteAllCategories() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para deleteAllCategories")
+        guard let repository = repository else {
+            print("Repository no configurado para deleteAllCategories")
             return
         }
         
-        let count = categories.count
-        
-        for category in categories {
-            modelContext.delete(category)
-        }
-        
-        do {
-            try modelContext.save()
-            print("✅ Se eliminaron \(count) categorías exitosamente")
-            fetchData() // Refresh data
-        } catch {
-            print("❌ Error al eliminar categorías: \(error)")
+        Task {
+            do {
+                let count = try await repository.deleteAllCategories()
+                print("✅ Se eliminaron \(count) categorías exitosamente")
+                await fetchData()
+            } catch {
+                print("❌ Error al eliminar categorías: \(error)")
+            }
         }
     }
     
     func deleteAllNotes() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para deleteAllNotes")
+        guard let repository = repository else {
+            print("Repository no configurado para deleteAllNotes")
             return
         }
         
-        let count = notes.count
-        
-        for note in notes {
-            modelContext.delete(note)
-        }
-        
-        do {
-            try modelContext.save()
-            print("✅ Se eliminaron \(count) notas exitosamente")
-            fetchData() // Refresh data
-        } catch {
-            print("❌ Error al eliminar notas: \(error)")
+        Task {
+            do {
+                let count = try await repository.deleteAllNotes()
+                print("✅ Se eliminaron \(count) notas exitosamente")
+                await fetchData()
+            } catch {
+                print("❌ Error al eliminar notas: \(error)")
+            }
         }
     }
     
     func deleteEverything() {
-        guard let modelContext = modelContext else {
-            print("ModelContext no configurado para deleteEverything")
+        guard let repository = repository else {
+            print("Repository no configurado para deleteEverything")
             return
         }
         
-        let categoryCount = categories.count
-        let noteCount = notes.count
-        
-        // Eliminar todas las notas
-        for note in notes {
-            modelContext.delete(note)
-        }
-        
-        // Eliminar todas las categorías
-        for category in categories {
-            modelContext.delete(category)
-        }
-        
-        do {
-            try modelContext.save()
-            print("🧹 TODO ELIMINADO: \(noteCount) notas y \(categoryCount) categorías")
-            fetchData() // Refresh data
-        } catch {
-            print("❌ Error al eliminar todo: \(error)")
+        Task {
+            do {
+                let result = try await repository.deleteAllData()
+                print("🧹 TODO ELIMINADO: \(result.notesDeleted) notas y \(result.categoriesDeleted) categorías")
+                await fetchData()
+            } catch {
+                print("❌ Error al eliminar todo: \(error)")
+            }
         }
     }
     
