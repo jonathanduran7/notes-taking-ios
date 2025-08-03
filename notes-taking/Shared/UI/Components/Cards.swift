@@ -10,6 +10,11 @@ import SwiftData
 
 struct Cards: View {
     let category: Category
+    @Query private var allNotes: [Notes]
+    
+    private var notesCount: Int {
+        allNotes.filter { $0.category?.id == category.id }.count
+    }
     
 
     
@@ -46,8 +51,7 @@ struct Cards: View {
                     .font(.caption)
                     .foregroundColor(.gray)
                 
-                //TODO: conectar con notes count
-                Text("0")
+                Text("\(notesCount)")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
