@@ -12,7 +12,7 @@ import SwiftData
 class HomeViewModel {
     
     // MARK: - Dependencies
-    private var modelContext: ModelContext
+    private var modelContext: ModelContext?
     
     // MARK: - Data Queries
     private var _categories: [Category] = []
@@ -57,8 +57,11 @@ class HomeViewModel {
     }
     
     // MARK: - Initialization
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    init() {}
+    
+    // MARK: - Configuration
+    func configure(with context: ModelContext) {
+        self.modelContext = context
         fetchData()
     }
     
@@ -69,6 +72,11 @@ class HomeViewModel {
     }
     
     private func fetchCategories() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para fetchCategories")
+            return
+        }
+        
         let categoriesDescriptor = FetchDescriptor<Category>(
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
@@ -82,6 +90,11 @@ class HomeViewModel {
     }
     
     private func fetchNotes() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para fetchNotes")
+            return
+        }
+        
         let notesDescriptor = FetchDescriptor<Notes>(
             sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
         )

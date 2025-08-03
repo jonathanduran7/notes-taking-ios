@@ -12,7 +12,7 @@ import SwiftData
 class CategoriesViewModel {
     
     // MARK: - Dependencies
-    private var modelContext: ModelContext
+    private var modelContext: ModelContext?
     
     // MARK: - Data Queries
     private var _categories: [Category] = []
@@ -41,13 +41,21 @@ class CategoriesViewModel {
     }
     
     // MARK: - Initialization
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    init() {}
+    
+    // MARK: - Configuration
+    func configure(with context: ModelContext) {
+        self.modelContext = context
         fetchData()
     }
     
     // MARK: - Data Management
     func fetchData() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para fetchData")
+            return
+        }
+        
         let categoriesDescriptor = FetchDescriptor<Category>(
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
@@ -90,6 +98,11 @@ class CategoriesViewModel {
     // MARK: - CRUD Operations
     
     func createCategory() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para createCategory")
+            return
+        }
+        
         let trimmedName = newCategoryName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
             print("⚠️ Cannot create category: name is empty")
@@ -110,6 +123,11 @@ class CategoriesViewModel {
     }
     
     func updateCategory() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para updateCategory")
+            return
+        }
+        
         guard let category = categoryToEdit else {
             print("⚠️ Cannot update: no category selected for editing")
             return
@@ -134,6 +152,11 @@ class CategoriesViewModel {
     }
     
     func deleteCategory() {
+        guard let modelContext = modelContext else {
+            print("ModelContext no configurado para deleteCategory")
+            return
+        }
+        
         guard let category = categoryToDelete else {
             print("⚠️ Cannot delete: no category selected for deletion")
             return

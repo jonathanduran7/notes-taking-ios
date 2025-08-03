@@ -12,17 +12,12 @@ struct CategoriesView: View {
     @Environment(\.modelContext) private var modelContext
     
     // MARK: - ViewModel
-    @State private var viewModel: CategoriesViewModel
+    @State private var viewModel = CategoriesViewModel()
     
     // MARK: - UI State
     @State private var showingAddSheet = false
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
-    
-    // MARK: - Initialization
-    init() {
-        self._viewModel = State(initialValue: CategoriesViewModel(modelContext: ModelContext(try! ModelContainer(for: Category.self))))
-    }
     
     var body: some View {
         NavigationView {
@@ -39,7 +34,7 @@ struct CategoriesView: View {
         }
         .onAppear {
             print("📁 Pestaña Categorías cargada")
-            viewModel = CategoriesViewModel(modelContext: modelContext)
+            viewModel.configure(with: modelContext)
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {

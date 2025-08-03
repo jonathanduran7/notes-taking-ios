@@ -12,12 +12,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     
     // MARK: - ViewModel
-    @State private var viewModel: HomeViewModel
-    
-    // MARK: - Initialization
-    init() {
-        self._viewModel = State(initialValue: HomeViewModel(modelContext: ModelContext(try! ModelContainer(for: Category.self, Notes.self))))
-    }
+    @State private var viewModel = HomeViewModel()
     
     var body: some View {
         VStack(spacing: 0) {
@@ -37,7 +32,7 @@ struct HomeView: View {
         }
         .onAppear {
             print("Pestaña Home cargada")
-            viewModel = HomeViewModel(modelContext: modelContext)
+            viewModel.configure(with: modelContext)
         }
     }
     
