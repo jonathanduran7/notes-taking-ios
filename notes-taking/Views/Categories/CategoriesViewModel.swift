@@ -15,6 +15,9 @@ class CategoriesViewModel {
     private var repository: DataRepositoryProtocol?
     private var router: AppRouter?
     
+    // MARK: - Loading States
+    let loadingManager = LoadingManager()
+    
     // MARK: - Data Queries
     private var _categories: [Category] = []
     
@@ -60,12 +63,15 @@ class CategoriesViewModel {
             return
         }
         
-        do {
-            _categories = try await repository.fetchCategories()
-        } catch {
-            print("❌ Error fetching categories: \(error)")
-            _categories = []
+        let result = await loadingManager.performOperation(.fetch) {
+            try await repository.fetchCategories()
         }
+        
+        _categories = result ?? []
+    }
+    
+    func refreshData() async {
+        await fetchData()
     }
     
     // MARK: - Form Management
@@ -110,12 +116,13 @@ class CategoriesViewModel {
         }
         
         Task {
-            do {
-                _ = try await repository.createCategory(name: trimmedName)
+            let result = await loadingManager.performOperation(.create) {
+                try await repository.createCategory(name: trimmedName)
+            }
+            
+            if result != nil {
                 await fetchData()
                 clearNewCategoryForm()
-            } catch {
-                print("❌ Error al crear categoría: \(error)")
             }
         }
     }
@@ -138,12 +145,14 @@ class CategoriesViewModel {
         }
         
         Task {
-            do {
+            let success = await loadingManager.performOperation(.update) {
                 try await repository.updateCategory(category, newName: trimmedName)
+                return true
+            }
+            
+            if success != nil {
                 await fetchData()
                 cancelEdit()
-            } catch {
-                print("❌ Error al actualizar categoría: \(error)")
             }
         }
     }
@@ -160,12 +169,14 @@ class CategoriesViewModel {
         }
         
         Task {
-            do {
+            let success = await loadingManager.performOperation(.delete) {
                 try await repository.deleteCategory(category)
+                return true
+            }
+            
+            if success != nil {
                 await fetchData()
                 cancelDelete()
-            } catch {
-                print("❌ Error al eliminar categoría: \(error)")
             }
         }
     }
