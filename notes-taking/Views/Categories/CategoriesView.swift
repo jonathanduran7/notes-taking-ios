@@ -10,24 +10,26 @@ import SwiftData
 
 struct CategoriesView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Category.createdAt, order: .reverse) private var categories: [Category]
     
+    // MARK: - ViewModel
+    @State private var viewModel: CategoriesViewModel
+    
+    // MARK: - UI State
     @State private var showingAddSheet = false
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
-    @State private var categoryToEdit: Category?
-    @State private var categoryToDelete: Category?
-    @State private var newCategoryName = ""
-    @State private var editCategoryName = ""
     
-
+    // MARK: - Initialization
+    init() {
+        self._viewModel = State(initialValue: CategoriesViewModel(modelContext: ModelContext(try! ModelContainer(for: Category.self))))
+    }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 TopBar(title: "Categorías")
                 
-                if categories.isEmpty {
+                if viewModel.isEmpty {
                     emptyStateView
                 } else {
                     categoriesListView
@@ -37,6 +39,7 @@ struct CategoriesView: View {
         }
         .onAppear {
             print("📁 Pestaña Categorías cargada")
+            viewModel = CategoriesViewModel(modelContext: modelContext)
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
@@ -88,7 +91,7 @@ struct CategoriesView: View {
         VStack(spacing: 0) {
             // Contador y botón agregar
             HStack {
-                Text("\(categories.count) categoría\(categories.count == 1 ? "" : "s")")
+                Text(viewModel.getCategoriesCountText())
                     .font(.caption)
                     .foregroundColor(.gray)
                 
@@ -109,16 +112,15 @@ struct CategoriesView: View {
             // Lista de categorías
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ForEach(categories) { category in
+                    ForEach(viewModel.categories) { category in
                         CategoryItem(
                             category: category,
                             onEdit: {
-                                categoryToEdit = category
-                                editCategoryName = category.name
+                                viewModel.prepareForEdit(category)
                                 showingEditSheet = true
                             },
                             onDelete: {
-                                categoryToDelete = category
+                                viewModel.prepareForDelete(category)
                                 showingDeleteAlert = true
                             }
                         )
@@ -137,10 +139,11 @@ struct CategoriesView: View {
                     Text("Nombre de la categoría")
                         .font(.headline)
                     
-                    TextField("Ej: Trabajo, Personal, Ideas...", text: $newCategoryName)
+                    TextField("Ej: Trabajo, Personal, Ideas...", text: $viewModel.newCategoryName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .onSubmit {
-                            addCategory()
+                            viewModel.createCategory()
+                            showingAddSheet = false
                         }
                 }
                 
@@ -149,14 +152,16 @@ struct CategoriesView: View {
                 VStack(spacing: 12) {
                     PrimaryButton(
                         title: "Crear Categoría",
-                        isEnabled: !newCategoryName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    ) {
-                        addCategory()
-                    }
+                        action: {
+                            viewModel.createCategory()
+                            showingAddSheet = false
+                        },
+                        isEnabled: viewModel.isNewCategoryFormValid
+                    )
                     
                     SecondaryButton(title: "Cancelar") {
                         showingAddSheet = false
-                        newCategoryName = ""
+                        viewModel.clearNewCategoryForm()
                     }
                 }
             }
@@ -175,10 +180,11 @@ struct CategoriesView: View {
                     Text("Nombre de la categoría")
                         .font(.headline)
                     
-                    TextField("Nombre de la categoría", text: $editCategoryName)
+                    TextField("Nombre de la categoría", text: $viewModel.editCategoryName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .onSubmit {
-                            updateCategory()
+                            viewModel.updateCategory()
+                            showingEditSheet = false
                         }
                 }
                 
@@ -187,15 +193,16 @@ struct CategoriesView: View {
                 VStack(spacing: 12) {
                     PrimaryButton(
                         title: "Guardar Cambios",
-                        isEnabled: !editCategoryName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    ) {
-                        updateCategory()
-                    }
+                        action: {
+                            viewModel.updateCategory()
+                            showingEditSheet = false
+                        },
+                        isEnabled: viewModel.isEditCategoryFormValid
+                    )
                     
                     SecondaryButton(title: "Cancelar") {
                         showingEditSheet = false
-                        categoryToEdit = nil
-                        editCategoryName = ""
+                        viewModel.cancelEdit()
                     }
                 }
             }
@@ -210,64 +217,15 @@ struct CategoriesView: View {
     private var deleteAlert: some View {
         Group {
             Button("Eliminar", role: .destructive) {
-                deleteCategory()
+                viewModel.deleteCategory()
             }
             Button("Cancelar", role: .cancel) {
-                categoryToDelete = nil
+                viewModel.cancelDelete()
             }
         }
     }
-    
-    // MARK: - CRUD Functions
-    private func addCategory() {
-        let trimmedName = newCategoryName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return }
-        
-        let newCategory = Category(name: trimmedName)
-        modelContext.insert(newCategory)
-        
-        do {
-            try modelContext.save()
-            print("✅ Categoría '\(trimmedName)' creada exitosamente")
-        } catch {
-            print("❌ Error al crear categoría: \(error)")
-        }
-        
-        showingAddSheet = false
-        newCategoryName = ""
-    }
-    
-    private func updateCategory() {
-        guard let category = categoryToEdit else { return }
-        let trimmedName = editCategoryName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return }
-        
-        category.updateName(trimmedName)
-        
-        do {
-            try modelContext.save()
-            print("✅ Categoría actualizada a '\(trimmedName)'")
-        } catch {
-            print("❌ Error al actualizar categoría: \(error)")
-        }
-        
-        showingEditSheet = false
-        categoryToEdit = nil
-        editCategoryName = ""
-    }
-    
-    private func deleteCategory() {
-        guard let category = categoryToDelete else { return }
-        
-        modelContext.delete(category)
-        
-        do {
-            try modelContext.save()
-            print("✅ Categoría '\(category.name)' eliminada")
-        } catch {
-            print("❌ Error al eliminar categoría: \(error)")
-        }
-        
-        categoryToDelete = nil
-    }
+}
+
+#Preview {
+    CategoriesView()
 }
