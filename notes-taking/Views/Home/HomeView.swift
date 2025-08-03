@@ -30,7 +30,7 @@ struct HomeView: View {
                 .padding(.horizontal)
             }
 
-            Spacer().frame(height: 10)
+            Spacer().frame(height: 40)
 
             HistoryNotes()
                 .padding(.horizontal)
