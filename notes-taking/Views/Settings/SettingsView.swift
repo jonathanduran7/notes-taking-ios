@@ -10,12 +10,19 @@ import SwiftData
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var categories: [Category]
-    @Query private var notes: [Notes]
     
+    // MARK: - ViewModel
+    @State private var viewModel: SettingsViewModel
+    
+    // MARK: - UI State
     @State private var showingDeleteCategoriesAlert = false
     @State private var showingDeleteNotesAlert = false
     @State private var showingDeleteAllAlert = false
+    
+    // MARK: - Initialization
+    init() {
+        self._viewModel = State(initialValue: SettingsViewModel(modelContext: ModelContext(try! ModelContainer(for: Category.self, Notes.self))))
+    }
     
     var body: some View {
         NavigationView {
@@ -39,6 +46,7 @@ struct SettingsView: View {
         }
         .onAppear {
             print("⚙️ Pestaña Ajustes cargada")
+            viewModel = SettingsViewModel(modelContext: modelContext)
         }
         // Alerts de confirmación
         .alert("Eliminar Categorías", isPresented: $showingDeleteCategoriesAlert) {
@@ -72,12 +80,12 @@ struct SettingsView: View {
             }
             
             VStack(spacing: 4) {
-                Text("Notes App")
+                Text(viewModel.getAppName())
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
-                Text("Versión 1.0.0")
+                Text("Versión \(viewModel.getAppVersion())")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
@@ -102,7 +110,7 @@ struct SettingsView: View {
                 StatCard(
                     icon: "folder.fill",
                     title: "Categorías",
-                    count: categories.count,
+                    count: viewModel.categoriesCount,
                     color: .sageGreen
                 )
                 
@@ -110,7 +118,7 @@ struct SettingsView: View {
                 StatCard(
                     icon: "note.text",
                     title: "Notas",
-                    count: notes.count,
+                    count: viewModel.notesCount,
                     color: .sageMedium
                 )
             }
@@ -133,18 +141,18 @@ struct SettingsView: View {
             VStack(spacing: 12) {
                 DangerButton(
                     title: "Eliminar todas las categorías",
-                    subtitle: "\(categories.count) categoría\(categories.count == 1 ? "" : "s")",
+                    subtitle: viewModel.getCategoriesSubtitle(),
                     icon: "folder.badge.minus",
-                    isEnabled: !categories.isEmpty
+                    isEnabled: viewModel.hasCategories
                 ) {
                     showingDeleteCategoriesAlert = true
                 }
                 
                 DangerButton(
                     title: "Eliminar todas las notas",
-                    subtitle: "\(notes.count) nota\(notes.count == 1 ? "" : "s")",
+                    subtitle: viewModel.getNotesSubtitle(),
                     icon: "note.text.badge.minus",
-                    isEnabled: !notes.isEmpty
+                    isEnabled: viewModel.hasNotes
                 ) {
                     showingDeleteNotesAlert = true
                 }
@@ -153,7 +161,7 @@ struct SettingsView: View {
                     title: "Borrar todo",
                     subtitle: "Elimina todas las notas y categorías",
                     icon: "trash.fill",
-                    isEnabled: !categories.isEmpty || !notes.isEmpty,
+                    isEnabled: viewModel.hasAnyData,
                     isDestructive: true
                 ) {
                     showingDeleteAllAlert = true
@@ -165,8 +173,8 @@ struct SettingsView: View {
     // MARK: - Alerts
     private var deleteCategoriesAlert: some View {
         Group {
-            Button("Eliminar \(categories.count) categoría\(categories.count == 1 ? "" : "s")", role: .destructive) {
-                deleteAllCategories()
+            Button(viewModel.getDeleteCategoriesAlertTitle(), role: .destructive) {
+                viewModel.deleteAllCategories()
             }
             Button("Cancelar", role: .cancel) { }
         }
@@ -174,8 +182,8 @@ struct SettingsView: View {
     
     private var deleteNotesAlert: some View {
         Group {
-            Button("Eliminar \(notes.count) nota\(notes.count == 1 ? "" : "s")", role: .destructive) {
-                deleteAllNotes()
+            Button(viewModel.getDeleteNotesAlertTitle(), role: .destructive) {
+                viewModel.deleteAllNotes()
             }
             Button("Cancelar", role: .cancel) { }
         }
@@ -184,62 +192,9 @@ struct SettingsView: View {
     private var deleteAllAlert: some View {
         Group {
             Button("¡SÍ, BORRAR TODO!", role: .destructive) {
-                deleteEverything()
+                viewModel.deleteEverything()
             }
             Button("Cancelar", role: .cancel) { }
-        }
-    }
-    
-    // MARK: - Delete Functions
-    private func deleteAllCategories() {
-        let count = categories.count
-        
-        for category in categories {
-            modelContext.delete(category)
-        }
-        
-        do {
-            try modelContext.save()
-            print("✅ Se eliminaron \(count) categorías exitosamente")
-        } catch {
-            print("❌ Error al eliminar categorías: \(error)")
-        }
-    }
-    
-    private func deleteAllNotes() {
-        let count = notes.count
-        
-        for note in notes {
-            modelContext.delete(note)
-        }
-        
-        do {
-            try modelContext.save()
-            print("✅ Se eliminaron \(count) notas exitosamente")
-        } catch {
-            print("❌ Error al eliminar notas: \(error)")
-        }
-    }
-    
-    private func deleteEverything() {
-        let categoryCount = categories.count
-        let noteCount = notes.count
-        
-        // Eliminar todas las notas
-        for note in notes {
-            modelContext.delete(note)
-        }
-        
-        // Eliminar todas las categorías
-        for category in categories {
-            modelContext.delete(category)
-        }
-        
-        do {
-            try modelContext.save()
-            print("🧹 TODO ELIMINADO: \(noteCount) notas y \(categoryCount) categorías")
-        } catch {
-            print("❌ Error al eliminar todo: \(error)")
         }
     }
 }
