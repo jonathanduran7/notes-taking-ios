@@ -11,6 +11,9 @@ import SwiftData
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     
+    // MARK: - Dependencies
+    let router: AppRouter
+    
     // MARK: - ViewModel
     @State private var viewModel = SettingsViewModel()
     
@@ -41,7 +44,7 @@ struct SettingsView: View {
         }
         .onAppear {
             print("⚙️ Pestaña Ajustes cargada")
-            viewModel.configure(with: modelContext)
+            viewModel.configure(with: modelContext, router: router)
         }
         // Alerts de confirmación
         .alert("Eliminar Categorías", isPresented: $showingDeleteCategoriesAlert) {
@@ -271,5 +274,5 @@ struct DangerButton: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(router: AppRouter.preview)
 }
