@@ -21,11 +21,34 @@ struct HistoryNotes: View {
                     .padding()
             }
 
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 10) {
-                    ForEach(notes.prefix(3)) { note in
-                        NoteItem(note: note, onEdit: {}, onDelete: {})
-                    }
+            if notes.isEmpty {
+                emptyStateView
+            } else {
+                listNotes
+            }
+        }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Spacer().frame(height: 20)
+            Image(systemName: "folder.badge.plus")
+                .font(.system(size: 64))
+                .foregroundColor(.sageGreen.opacity(0.6))
+
+            Text("No hay notas")
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            Text("Crea una nota para empezar a tomar notas")
+        }
+    }
+
+    private var listNotes: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 10) {
+                ForEach(notes.prefix(3)) { note in
+                    NoteItem(note: note, onEdit: {}, onDelete: {})
                 }
             }
         }
