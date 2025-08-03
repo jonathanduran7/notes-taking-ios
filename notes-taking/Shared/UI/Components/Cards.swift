@@ -11,10 +11,7 @@ import SwiftData
 struct Cards: View {
     let category: Category
     
-    private let sageGreen = Color(red: 0.51, green: 0.60, blue: 0.57) // #819A91
-    private let sageMedium = Color(red: 0.65, green: 0.76, blue: 0.66) // #A7C1A8
-    private let sageLight = Color(red: 0.82, green: 0.85, blue: 0.75) // #D1D8BE
-    private let cream = Color(red: 0.93, green: 0.94, blue: 0.88) // #EEEFE0
+
     
     var body: some View {
         VStack(spacing: 12) {
@@ -22,7 +19,7 @@ struct Cards: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            gradient: Gradient(colors: [sageMedium.opacity(0.3), sageLight.opacity(0.5)]),
+                            gradient: Gradient(colors: [Color.sageMedium.opacity(0.3), Color.sageLight.opacity(0.5)]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -31,7 +28,7 @@ struct Cards: View {
                 
                 Image(systemName: "folder.fill")
                     .font(.title2)
-                    .foregroundColor(sageGreen)
+                    .foregroundColor(.sageGreen)
             }
             
             Text(category.name)
@@ -62,7 +59,7 @@ struct Cards: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
-                        gradient: Gradient(colors: [cream, cream.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.cream, Color.cream.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -70,10 +67,10 @@ struct Cards: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(sageLight, lineWidth: 1)
+                .stroke(Color.sageLight, lineWidth: 1)
         )
         .shadow(
-            color: sageGreen.opacity(0.1),
+            color: .sageGreen.opacity(0.1),
             radius: 8,
             x: 0,
             y: 4

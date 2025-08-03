@@ -39,7 +39,7 @@ struct ContentView: View {
                     Text("Ajustes")
                 }
         }
-        .accentColor(Color(red: 0.51, green: 0.60, blue: 0.57))
+        .accentColor(.appAccent)
     }
 }
 

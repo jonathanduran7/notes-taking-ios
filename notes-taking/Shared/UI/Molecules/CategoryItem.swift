@@ -12,16 +12,14 @@ struct CategoryItem: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
     
-    private let sageLight = Color(red: 0.82, green: 0.85, blue: 0.75) // #D1D8BE
-    private let cream = Color(red: 0.93, green: 0.94, blue: 0.88) // #EEEFE0
-    private let sageGreen = Color(red: 0.51, green: 0.60, blue: 0.57) // #819A91
+
     
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "folder.fill")
-                        .foregroundColor(sageGreen)
+                        .foregroundColor(.sageGreen)
                         .font(.title2)
                     
                     Text(category.name)
@@ -41,9 +39,9 @@ struct CategoryItem: View {
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
                         .font(.title3)
-                        .foregroundColor(sageGreen)
+                        .foregroundColor(.sageGreen)
                         .frame(width: 32, height: 32)
-                        .background(cream)
+                        .background(Color.cream)
                         .cornerRadius(6)
                 }
                 
@@ -59,7 +57,7 @@ struct CategoryItem: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(cream)
+        .background(Color.cream)
         .cornerRadius(12)
         .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
     }

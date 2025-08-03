@@ -20,8 +20,7 @@ struct CategoriesView: View {
     @State private var newCategoryName = ""
     @State private var editCategoryName = ""
     
-    private let sageGreen = Color(red: 0.51, green: 0.60, blue: 0.57) // #819A91
-    private let cream = Color(red: 0.93, green: 0.94, blue: 0.88) // #EEEFE0
+
     
     var body: some View {
         NavigationView {
@@ -58,7 +57,7 @@ struct CategoriesView: View {
             
             Image(systemName: "folder.badge.plus")
                 .font(.system(size: 64))
-                .foregroundColor(sageGreen.opacity(0.6))
+                .foregroundColor(.sageGreen.opacity(0.6))
             
             VStack(spacing: 8) {
                 Text("No hay categorías")
@@ -102,7 +101,7 @@ struct CategoriesView: View {
                     }
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(sageGreen)
+                    .foregroundColor(.sageGreen)
                 }
             }
             .padding()
