@@ -28,7 +28,9 @@ struct NotesView: View {
             VStack(spacing: 0) {
                 TopBar(title: "Mis Notas")
                 
-                if notes.isEmpty {
+                if categories.isEmpty { 
+                    emptyStateViewCategories
+                } else if notes.isEmpty {
                     emptyStateView
                 } else {
                     notesListView
@@ -49,6 +51,28 @@ struct NotesView: View {
         .alert("Eliminar Nota", isPresented: $showingDeleteAlert) {
             deleteAlert
         }
+    }
+
+    private var emptyStateViewCategories: some View {
+        VStack(spacing: 20) {     
+            Spacer()
+            Image(systemName: "folder.badge.plus")
+                .font(.system(size: 64))
+                .foregroundColor(Color.sageGreen.opacity(0.6))
+            
+            VStack(spacing: 8) {
+                Text("No tienes categorías")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                Text("Crea tu primera categoría para organizar tus notas")
+                    .font(.body)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+            }
+
+            Spacer()
+        }.padding(.horizontal)
     }
     
     // MARK: - Empty State
