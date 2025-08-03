@@ -107,11 +107,22 @@ final class SwiftDataRepository: DataRepositoryProtocol {
         return try await withCheckedThrowingContinuation { continuation in
             do {
                 let categoryName = category.name
+                
+                let relatedNotes = try fetchNotesSync(for: category)
+                let notesCount = relatedNotes.count
+                
+                for note in relatedNotes {
+                    modelContext.delete(note)
+                }
+                
                 modelContext.delete(category)
                 try modelContext.save()
                 
                 if configuration.enableLogging {
-                    print("✅ Repository: Deleted category '\(categoryName)'")
+                    if notesCount > 0 {
+                        print("🗑️ Repository: Cascade delete - Deleted \(notesCount) notes from category '\(categoryName)'")
+                    }
+                    print("✅ Repository: Deleted category '\(categoryName)' (+ \(notesCount) related notes)")
                 }
                 
                 continuation.resume()
@@ -128,7 +139,17 @@ final class SwiftDataRepository: DataRepositoryProtocol {
         return try await withCheckedThrowingContinuation { continuation in
             do {
                 let categories = try fetchCategoriesSync()
-                let count = categories.count
+                let categoriesCount = categories.count
+                var totalNotesDeleted = 0
+                
+                for category in categories {
+                    let relatedNotes = try fetchNotesSync(for: category)
+                    totalNotesDeleted += relatedNotes.count
+                    
+                    for note in relatedNotes {
+                        modelContext.delete(note)
+                    }
+                }
                 
                 for category in categories {
                     modelContext.delete(category)
@@ -137,10 +158,13 @@ final class SwiftDataRepository: DataRepositoryProtocol {
                 try modelContext.save()
                 
                 if configuration.enableLogging {
-                    print("🧹 Repository: Deleted all \(count) categories")
+                    if totalNotesDeleted > 0 {
+                        print("🗑️ Repository: Cascade delete - Deleted \(totalNotesDeleted) notes from \(categoriesCount) categories")
+                    }
+                    print("🧹 Repository: Deleted all \(categoriesCount) categories (+ \(totalNotesDeleted) related notes)")
                 }
                 
-                continuation.resume(returning: count)
+                continuation.resume(returning: categoriesCount)
             } catch {
                 if configuration.enableLogging {
                     print("❌ Repository: Error deleting all categories: \(error)")
@@ -380,6 +404,11 @@ final class SwiftDataRepository: DataRepositoryProtocol {
             sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
         )
         return try modelContext.fetch(descriptor)
+    }
+    
+    private func fetchNotesSync(for category: Category) throws -> [Notes] {
+        let allNotes = try fetchNotesSync()
+        return allNotes.filter { $0.category?.id == category.id }
     }
 }
 
