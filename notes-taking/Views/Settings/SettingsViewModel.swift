@@ -127,8 +127,16 @@ class SettingsViewModel {
     
     // MARK: - Helper Methods
     
+    private var notesWithCategoriesCount: Int {
+        notes.filter { $0.category != nil }.count
+    }
+    
     func getCategoriesSubtitle() -> String {
-        "\(categoriesCount) categoría\(categoriesCount == 1 ? "" : "s")"
+        let relatedNotes = notesWithCategoriesCount
+        if relatedNotes > 0 {
+            return "\(categoriesCount) categoría\(categoriesCount == 1 ? "" : "s") + \(relatedNotes) nota\(relatedNotes == 1 ? "" : "s") relacionada\(relatedNotes == 1 ? "" : "s")"
+        }
+        return "\(categoriesCount) categoría\(categoriesCount == 1 ? "" : "s")"
     }
     
     func getNotesSubtitle() -> String {
@@ -136,7 +144,11 @@ class SettingsViewModel {
     }
     
     func getDeleteCategoriesAlertTitle() -> String {
-        "Eliminar \(categoriesCount) categoría\(categoriesCount == 1 ? "" : "s")"
+        let relatedNotes = notesWithCategoriesCount
+        if relatedNotes > 0 {
+            return "⚠️ Eliminar \(categoriesCount) categoría\(categoriesCount == 1 ? "" : "s") + \(relatedNotes) nota\(relatedNotes == 1 ? "" : "s")"
+        }
+        return "Eliminar \(categoriesCount) categoría\(categoriesCount == 1 ? "" : "s")"
     }
     
     func getDeleteNotesAlertTitle() -> String {
