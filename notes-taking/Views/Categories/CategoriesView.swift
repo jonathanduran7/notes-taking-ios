@@ -32,9 +32,13 @@ struct CategoriesView: View {
             }
             .navigationBarHidden(true)
         }
+        .loadingOverlay(viewModel.loadingManager, operation: .fetch)
         .onAppear {
             print("📁 Pestaña Categorías cargada")
             viewModel.configure(with: dependencies.repository, router: dependencies.router)
+        }
+        .refreshable {
+            await viewModel.refreshData()
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
@@ -153,7 +157,7 @@ struct CategoriesView: View {
                             viewModel.createCategory()
                             showingAddSheet = false
                         },
-                        isEnabled: viewModel.isNewCategoryFormValid
+                        isEnabled: viewModel.isNewCategoryFormValid && !viewModel.loadingManager.isAnyLoading()
                     )
                     
                     SecondaryButton(title: "Cancelar") {
@@ -194,7 +198,7 @@ struct CategoriesView: View {
                             viewModel.updateCategory()
                             showingEditSheet = false
                         },
-                        isEnabled: viewModel.isEditCategoryFormValid
+                        isEnabled: viewModel.isEditCategoryFormValid && !viewModel.loadingManager.isAnyLoading()
                     )
                     
                     SecondaryButton(title: "Cancelar") {

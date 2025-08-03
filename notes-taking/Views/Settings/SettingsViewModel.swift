@@ -10,11 +10,14 @@ import SwiftData
 
 @Observable
 class SettingsViewModel {
-    
+
     // MARK: - Dependencies
     private var repository: DataRepositoryProtocol?
     private var router: AppRouter?
-    
+
+    // MARK: - Loading States
+    let loadingManager = LoadingManager()
+
     // MARK: - Data Queries
     private var _categories: [Category] = []
     private var _notes: [Notes] = []
@@ -62,14 +65,26 @@ class SettingsViewModel {
             return
         }
         
+        loadingManager.startLoading(.fetch)
+        
         do {
-            _categories = try await repository.fetchCategories()
-            _notes = try await repository.fetchNotes()
+            async let categoriesResult = repository.fetchCategories()
+            async let notesResult = repository.fetchNotes()
+            
+            _categories = try await categoriesResult
+            _notes = try await notesResult
+            
+            loadingManager.finishLoading(.fetch, success: true)
         } catch {
             print("❌ Error fetching data: \(error)")
             _categories = []
             _notes = []
+            loadingManager.handleError(error, for: .fetch)
         }
+    }
+    
+    func refreshData() async {
+        await fetchData()
     }
     
     // MARK: - Delete Operations
@@ -81,12 +96,13 @@ class SettingsViewModel {
         }
         
         Task {
-            do {
-                let count = try await repository.deleteAllCategories()
+            let result = await loadingManager.performOperation(.deleteAll) {
+                try await repository.deleteAllCategories()
+            }
+            
+            if let count = result {
                 print("✅ Se eliminaron \(count) categorías exitosamente")
                 await fetchData()
-            } catch {
-                print("❌ Error al eliminar categorías: \(error)")
             }
         }
     }
@@ -98,12 +114,13 @@ class SettingsViewModel {
         }
         
         Task {
-            do {
-                let count = try await repository.deleteAllNotes()
+            let result = await loadingManager.performOperation(.deleteAll) {
+                try await repository.deleteAllNotes()
+            }
+            
+            if let count = result {
                 print("✅ Se eliminaron \(count) notas exitosamente")
                 await fetchData()
-            } catch {
-                print("❌ Error al eliminar notas: \(error)")
             }
         }
     }
@@ -115,12 +132,13 @@ class SettingsViewModel {
         }
         
         Task {
-            do {
-                let result = try await repository.deleteAllData()
-                print("🧹 TODO ELIMINADO: \(result.notesDeleted) notas y \(result.categoriesDeleted) categorías")
+            let result = await loadingManager.performOperation(.deleteAll) {
+                try await repository.deleteAllData()
+            }
+            
+            if let deleteResult = result {
+                print("🧹 TODO ELIMINADO: \(deleteResult.notesDeleted) notas y \(deleteResult.categoriesDeleted) categorías")
                 await fetchData()
-            } catch {
-                print("❌ Error al eliminar todo: \(error)")
             }
         }
     }

@@ -15,6 +15,9 @@ class NotesViewModel {
     private var repository: DataRepositoryProtocol?
     private var router: AppRouter?
     
+    // MARK: - Loading States
+    let loadingManager = LoadingManager()
+    
     // MARK: - Data Queries
     private var _notes: [Notes] = []
     private var _categories: [Category] = []
@@ -63,14 +66,26 @@ class NotesViewModel {
             return
         }
         
+        loadingManager.startLoading(.fetch)
+        
         do {
-            _notes = try await repository.fetchNotes()
-            _categories = try await repository.fetchCategories()
+            async let notesResult = repository.fetchNotes()
+            async let categoriesResult = repository.fetchCategories()
+            
+            _notes = try await notesResult
+            _categories = try await categoriesResult
+            
+            loadingManager.finishLoading(.fetch, success: true)
         } catch {
             print("❌ Error fetching data: \(error)")
             _notes = []
             _categories = []
+            loadingManager.handleError(error, for: .fetch)
         }
+    }
+    
+    func refreshData() async {
+        await fetchData()
     }
     
     // MARK: - Form Management
@@ -115,16 +130,17 @@ class NotesViewModel {
         }
         
         Task {
-            do {
-                _ = try await repository.createNote(
+            let result = await loadingManager.performOperation(.create) {
+                try await repository.createNote(
                     title: trimmedTitle,
-                    content: formContent,
-                    category: selectedCategory
+                    content: self.formContent,
+                    category: self.selectedCategory
                 )
+            }
+            
+            if result != nil {
                 await fetchData()
                 clearForm()
-            } catch {
-                print("❌ Error al crear nota: \(error)")
             }
         }
     }
@@ -147,17 +163,19 @@ class NotesViewModel {
         }
         
         Task {
-            do {
+            let success = await loadingManager.performOperation(.update) {
                 try await repository.updateNote(
                     note,
                     title: trimmedTitle,
-                    content: formContent,
-                    category: selectedCategory
+                    content: self.formContent,
+                    category: self.selectedCategory
                 )
+                return true
+            }
+            
+            if success != nil {
                 await fetchData()
                 cancelEdit()
-            } catch {
-                print("❌ Error al actualizar nota: \(error)")
             }
         }
     }
@@ -174,12 +192,14 @@ class NotesViewModel {
         }
         
         Task {
-            do {
+            let success = await loadingManager.performOperation(.delete) {
                 try await repository.deleteNote(note)
+                return true
+            }
+            
+            if success != nil {
                 await fetchData()
                 cancelDelete()
-            } catch {
-                print("❌ Error al eliminar nota: \(error)")
             }
         }
     }

@@ -39,9 +39,13 @@ struct SettingsView: View {
             }
             .navigationBarHidden(true)
         }
+        .loadingOverlay(viewModel.loadingManager, operation: .deleteAll)
         .onAppear {
             print("⚙️ Pestaña Ajustes cargada")
             viewModel.configure(with: dependencies.repository, router: dependencies.router)
+        }
+        .refreshable {
+            await viewModel.refreshData()
         }
         // Alerts de confirmación
         .alert("⚠️ Eliminar Categorías", isPresented: $showingDeleteCategoriesAlert) {
@@ -140,7 +144,7 @@ struct SettingsView: View {
                     title: "Eliminar todas las categorías",
                     subtitle: viewModel.getCategoriesSubtitle(),
                     icon: "folder.badge.minus",
-                    isEnabled: viewModel.hasCategories
+                    isEnabled: viewModel.hasCategories && !viewModel.loadingManager.isAnyLoading()
                 ) {
                     showingDeleteCategoriesAlert = true
                 }
@@ -149,7 +153,7 @@ struct SettingsView: View {
                     title: "Eliminar todas las notas",
                     subtitle: viewModel.getNotesSubtitle(),
                     icon: "note.text.badge.minus",
-                    isEnabled: viewModel.hasNotes
+                    isEnabled: viewModel.hasNotes && !viewModel.loadingManager.isAnyLoading()
                 ) {
                     showingDeleteNotesAlert = true
                 }
@@ -158,7 +162,7 @@ struct SettingsView: View {
                     title: "Borrar todo",
                     subtitle: "Elimina todas las notas y categorías",
                     icon: "trash.fill",
-                    isEnabled: viewModel.hasAnyData,
+                    isEnabled: viewModel.hasAnyData && !viewModel.loadingManager.isAnyLoading(),
                     isDestructive: true
                 ) {
                     showingDeleteAllAlert = true
