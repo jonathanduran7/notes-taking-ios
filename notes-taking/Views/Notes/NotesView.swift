@@ -10,27 +10,28 @@ import SwiftData
 
 struct NotesView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Notes.updatedAt, order: .reverse) private var notes: [Notes]
-    @Query(sort: \Category.name) private var categories: [Category]
     
+    // MARK: - ViewModel
+    @State private var viewModel: NotesViewModel
+    
+    // MARK: - UI State
     @State private var showingAddSheet = false
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
-    @State private var noteToEdit: Notes?
-    @State private var noteToDelete: Notes?
     
-    @State private var formTitle = ""
-    @State private var formContent = ""
-    @State private var selectedCategory: Category?
+    // MARK: - Initialization
+    init() {
+        self._viewModel = State(initialValue: NotesViewModel(modelContext: ModelContext(try! ModelContainer(for: Notes.self, Category.self))))
+    }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 TopBar(title: "Mis Notas")
                 
-                if categories.isEmpty { 
+                if viewModel.categoriesEmpty { 
                     emptyStateViewCategories
-                } else if notes.isEmpty {
+                } else if viewModel.isEmpty {
                     emptyStateView
                 } else {
                     notesListView
@@ -40,6 +41,7 @@ struct NotesView: View {
         }
         .onAppear {
             print("📝 Pestaña Notas cargada")
+            viewModel = NotesViewModel(modelContext: modelContext)
         }
         // Sheets y Alerts
         .sheet(isPresented: $showingAddSheet) {
@@ -53,6 +55,7 @@ struct NotesView: View {
         }
     }
 
+    // MARK: - Empty States
     private var emptyStateViewCategories: some View {
         VStack(spacing: 20) {     
             Spacer()
@@ -72,10 +75,10 @@ struct NotesView: View {
             }
 
             Spacer()
-        }.padding(.horizontal)
+        }
+        .padding(.horizontal)
     }
     
-    // MARK: - Empty State
     private var emptyStateView: some View {
         VStack(spacing: 20) {
             Spacer()
@@ -113,7 +116,7 @@ struct NotesView: View {
         VStack(spacing: 0) {
             // Header con contador y botón agregar
             HStack {
-                Text("\(notes.count) nota\(notes.count == 1 ? "" : "s")")
+                Text(viewModel.getNotesCountText())
                     .font(.caption)
                     .foregroundColor(.gray)
                 
@@ -134,18 +137,15 @@ struct NotesView: View {
             // Lista de notas
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ForEach(notes) { note in
+                    ForEach(viewModel.notes) { note in
                         NoteItem(
                             note: note,
                             onEdit: {
-                                noteToEdit = note
-                                formTitle = note.title
-                                formContent = note.content
-                                selectedCategory = note.category
+                                viewModel.prepareForEdit(note)
                                 showingEditSheet = true
                             },
                             onDelete: {
-                                noteToDelete = note
+                                viewModel.prepareForDelete(note)
                                 showingDeleteAlert = true
                             }
                         )
@@ -156,32 +156,36 @@ struct NotesView: View {
         }
     }
     
-    // MARK: - Add Note Sheet
+    // MARK: - Sheets
     private var addNoteSheet: some View {
         NavigationView {
             noteFormView(
                 title: "Nueva Nota",
                 primaryButtonTitle: "Crear Nota",
-                primaryAction: addNote,
+                primaryAction: {
+                    viewModel.createNote()
+                    showingAddSheet = false
+                },
                 secondaryAction: {
                     showingAddSheet = false
-                    clearForm()
+                    viewModel.clearForm()
                 }
             )
         }
     }
     
-    // MARK: - Edit Note Sheet
     private var editNoteSheet: some View {
         NavigationView {
             noteFormView(
                 title: "Editar Nota",
                 primaryButtonTitle: "Guardar Cambios",
-                primaryAction: updateNote,
+                primaryAction: {
+                    viewModel.updateNote()
+                    showingEditSheet = false
+                },
                 secondaryAction: {
                     showingEditSheet = false
-                    noteToEdit = nil
-                    clearForm()
+                    viewModel.cancelEdit()
                 }
             )
         }
@@ -200,7 +204,7 @@ struct NotesView: View {
                 Text("Título de la nota")
                     .font(.headline)
                 
-                TextField("Escribe el título...", text: $formTitle)
+                TextField("Escribe el título...", text: $viewModel.formTitle)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
             }
             
@@ -209,7 +213,7 @@ struct NotesView: View {
                 Text("Categoría")
                     .font(.headline)
                 
-                if categories.isEmpty {
+                if !viewModel.hasCategoriesAvailable() {
                     Text("No hay categorías. Crea una en la pestaña Categorías.")
                         .font(.caption)
                         .foregroundColor(.gray)
@@ -217,18 +221,18 @@ struct NotesView: View {
                 } else {
                     Menu {
                         Button("Sin categoría") {
-                            selectedCategory = nil
+                            viewModel.selectedCategory = nil
                         }
                         
-                        ForEach(categories) { category in
+                        ForEach(viewModel.categories) { category in
                             Button(category.name) {
-                                selectedCategory = category
+                                viewModel.selectedCategory = category
                             }
                         }
                     } label: {
                         HStack {
-                            Text(selectedCategory?.name ?? "Seleccionar categoría")
-                                .foregroundColor(selectedCategory == nil ? .gray : .primary)
+                            Text(viewModel.getCategoryPlaceholderText())
+                                .foregroundColor(viewModel.getCategoryTextColor())
                             
                             Spacer()
                             
@@ -247,7 +251,7 @@ struct NotesView: View {
                 Text("Contenido")
                     .font(.headline)
                 
-                TextEditor(text: $formContent)
+                TextEditor(text: $viewModel.formContent)
                     .frame(minHeight: 150)
                     .padding(4)
                     .background(Color.gray.opacity(0.1))
@@ -261,7 +265,7 @@ struct NotesView: View {
                 PrimaryButton(
                     title: primaryButtonTitle,
                     action: primaryAction,
-                    isEnabled: !formTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    isEnabled: viewModel.isFormValid
                 )
                 
                 SecondaryButton(title: "Cancelar") {
@@ -279,79 +283,15 @@ struct NotesView: View {
     private var deleteAlert: some View {
         Group {
             Button("Eliminar", role: .destructive) {
-                deleteNote()
+                viewModel.deleteNote()
             }
             Button("Cancelar", role: .cancel) {
-                noteToDelete = nil
+                viewModel.cancelDelete()
             }
         }
     }
-    
-    // MARK: - CRUD Functions
-    private func addNote() {
-        let trimmedTitle = formTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty else { return }
-        
-        let newNote = Notes(
-            title: trimmedTitle,
-            content: formContent,
-            category: selectedCategory
-        )
-        
-        modelContext.insert(newNote)
-        
-        do {
-            try modelContext.save()
-            print("✅ Nota '\(trimmedTitle)' creada exitosamente")
-        } catch {
-            print("❌ Error al crear nota: \(error)")
-        }
-        
-        showingAddSheet = false
-        clearForm()
-    }
-    
-    private func updateNote() {
-        guard let note = noteToEdit else { return }
-        let trimmedTitle = formTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty else { return }
-        
-        note.update(
-            title: trimmedTitle,
-            content: formContent,
-            category: selectedCategory
-        )
-        
-        do {
-            try modelContext.save()
-            print("✅ Nota '\(trimmedTitle)' actualizada")
-        } catch {
-            print("❌ Error al actualizar nota: \(error)")
-        }
-        
-        showingEditSheet = false
-        noteToEdit = nil
-        clearForm()
-    }
-    
-    private func deleteNote() {
-        guard let note = noteToDelete else { return }
-        
-        modelContext.delete(note)
-        
-        do {
-            try modelContext.save()
-            print("✅ Nota '\(note.title)' eliminada")
-        } catch {
-            print("❌ Error al eliminar nota: \(error)")
-        }
-        
-        noteToDelete = nil
-    }
-    
-    private func clearForm() {
-        formTitle = ""
-        formContent = ""
-        selectedCategory = nil
-    }
+}
+
+#Preview {
+    NotesView()
 }
