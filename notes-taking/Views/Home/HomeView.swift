@@ -9,40 +9,27 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
-    @Query(sort: \Category.createdAt, order: .reverse)
-    private var categories: [Category]
+    @Environment(\.modelContext) private var modelContext
     
-    @Query(sort: \Notes.updatedAt, order: .reverse)
-    private var allNotes: [Notes]
+    // MARK: - ViewModel
+    @State private var viewModel: HomeViewModel
     
-    @State private var searchText = ""
-    @State private var isSearching = false
-    
-    private var filteredNotes: [Notes] {
-        if searchText.isEmpty {
-            return []
-        }
-        
-        return allNotes.filter { note in
-            note.title.localizedCaseInsensitiveContains(searchText) ||
-            note.content.localizedCaseInsensitiveContains(searchText) ||
-            (note.category?.name.localizedCaseInsensitiveContains(searchText) ?? false)
-        }
+    // MARK: - Initialization
+    init() {
+        self._viewModel = State(initialValue: HomeViewModel(modelContext: ModelContext(try! ModelContainer(for: Category.self, Notes.self))))
     }
     
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(title: "Home")
+            TopBar(title: viewModel.isSearching ? "Buscar" : "Home")
             
-            SearchBar(searchText: $searchText) { text in
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isSearching = !text.isEmpty
-                }
+            SearchBar(searchText: $viewModel.searchText) { text in
+                viewModel.updateSearchText(text)
             }
             .padding(.horizontal)
             .padding(.top, 8)
             
-            if isSearching {
+            if viewModel.isSearching {
                 searchResultsView
             } else {
                 homeContentView
@@ -50,6 +37,7 @@ struct HomeView: View {
         }
         .onAppear {
             print("Pestaña Home cargada")
+            viewModel = HomeViewModel(modelContext: modelContext)
         }
     }
     
@@ -59,7 +47,7 @@ struct HomeView: View {
             Spacer().frame(height: 16)
             
             // Categorías horizontales
-            if !categories.isEmpty {
+            if viewModel.hasCategories {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Categorías")
@@ -69,7 +57,7 @@ struct HomeView: View {
                         
                         Spacer()
                         
-                        Text("\(categories.count)")
+                        Text(viewModel.getCategoriesCountText())
                             .font(.caption)
                             .foregroundColor(.gray)
                             .padding(.horizontal, 8)
@@ -81,7 +69,7 @@ struct HomeView: View {
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
-                            ForEach(categories) { category in
+                            ForEach(viewModel.categories) { category in
                                 Cards(category: category)
                             }
                         }
@@ -112,8 +100,8 @@ struct HomeView: View {
                 
                 Spacer()
                 
-                if !filteredNotes.isEmpty {
-                    Text("\(filteredNotes.count) nota\(filteredNotes.count == 1 ? "" : "s")")
+                if viewModel.hasSearchResults {
+                    Text(viewModel.getSearchResultsCountText())
                         .font(.caption)
                         .foregroundColor(.gray)
                         .padding(.horizontal, 8)
@@ -125,7 +113,7 @@ struct HomeView: View {
             .padding(.horizontal)
             .padding(.top, 16)
             
-            if filteredNotes.isEmpty {
+            if !viewModel.hasSearchResults {
                 emptySearchView
             } else {
                 searchResultsList
@@ -152,19 +140,20 @@ struct HomeView: View {
                     .font(.body)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
-            }.frame(maxWidth: .infinity)
+            }
+            .frame(maxWidth: .infinity)
             
             // Sugerencias de búsqueda
-            if !allNotes.isEmpty {
+            if viewModel.hasNotes {
                 VStack(spacing: 8) {
                     Text("Sugerencias:")
                         .font(.caption)
                         .foregroundColor(.gray)
                     
                     HStack {
-                        ForEach(getSearchSuggestions(), id: \.self) { suggestion in
+                        ForEach(viewModel.getSearchSuggestions(), id: \.self) { suggestion in
                             Button(action: {
-                                searchText = suggestion
+                                viewModel.applySuggestion(suggestion)
                             }) {
                                 Text(suggestion)
                                     .font(.caption)
@@ -189,14 +178,12 @@ struct HomeView: View {
     private var searchResultsList: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                ForEach(filteredNotes) { note in
+                ForEach(viewModel.filteredNotes) { note in
                     SearchResultItem(
                         note: note,
-                        searchTerm: searchText,
+                        viewModel: viewModel,
                         onTap: {
-                            // Navegar a la pestaña de notas
-                            NotificationCenter.default.post(name: NSNotification.Name("SwitchToNotesTab"), object: nil)
-                            print("🔍 Navegando a nota: \(note.title)")
+                            viewModel.navigateToNoteDetail(note)
                         }
                     )
                 }
@@ -204,22 +191,12 @@ struct HomeView: View {
             .padding()
         }
     }
-    
-    // MARK: - Helper Functions
-    private func getSearchSuggestions() -> [String] {
-        let categoryNames = categories.prefix(3).map { $0.name }
-        let recentWords = allNotes.prefix(5).compactMap { note in
-            note.title.components(separatedBy: " ").first
-        }
-        
-        return Array(Set(categoryNames + recentWords)).prefix(3).map { String($0) }
-    }
 }
 
 // MARK: - Search Result Item Component
 struct SearchResultItem: View {
     let note: Notes
-    let searchTerm: String
+    let viewModel: HomeViewModel
     let onTap: () -> Void
     
     var body: some View {
@@ -229,7 +206,7 @@ struct SearchResultItem: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         // Título con highlight
-                        Text(highlightedText(note.title, searchTerm: searchTerm))
+                        Text(viewModel.highlightedText(note.title))
                             .font(.body)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
@@ -243,7 +220,7 @@ struct SearchResultItem: View {
                                     .font(.caption2)
                                     .foregroundColor(.sageGreen)
                                 
-                                Text(highlightedText(category.name, searchTerm: searchTerm))
+                                Text(viewModel.highlightedText(category.name))
                                     .font(.caption)
                                     .foregroundColor(.sageGreen)
                             }
@@ -259,7 +236,7 @@ struct SearchResultItem: View {
                 
                 // Contenido con highlight
                 if !note.content.isEmpty {
-                    Text(highlightedText(getPreview(note.content), searchTerm: searchTerm))
+                    Text(viewModel.highlightedText(viewModel.getPreview(for: note.content)))
                         .font(.caption)
                         .foregroundColor(.gray)
                         .lineLimit(2)
@@ -290,31 +267,6 @@ struct SearchResultItem: View {
             .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
         }
         .buttonStyle(PlainButtonStyle())
-    }
-    
-    private func getPreview(_ text: String) -> String {
-        if text.count <= 100 {
-            return text
-        }
-        
-        if let range = text.range(of: searchTerm, options: .caseInsensitive) {
-            let start = max(text.startIndex, text.index(range.lowerBound, offsetBy: -30, limitedBy: text.startIndex) ?? text.startIndex)
-            let end = min(text.endIndex, text.index(range.upperBound, offsetBy: 30, limitedBy: text.endIndex) ?? text.endIndex)
-            return "..." + String(text[start..<end]) + "..."
-        }
-        
-        return String(text.prefix(100)) + "..."
-    }
-    
-    private func highlightedText(_ text: String, searchTerm: String) -> AttributedString {
-        var attributed = AttributedString(text)
-        
-        if let range = attributed.range(of: searchTerm, options: .caseInsensitive) {
-            attributed[range].backgroundColor = Color.sageGreen.opacity(0.3)
-            attributed[range].foregroundColor = Color.sageGreen
-        }
-        
-        return attributed
     }
 }
 
