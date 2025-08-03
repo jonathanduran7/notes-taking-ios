@@ -163,11 +163,15 @@ final class MockRepository: DataRepositoryProtocol {
     }
     
     func deleteCategory(_ category: Category) async throws {
+        mockNotes.removeAll { $0.category?.id == category.id }
         mockCategories.removeAll { $0.id == category.id }
     }
     
     func deleteAllCategories() async throws -> Int {
         let count = mockCategories.count
+        
+        mockNotes.removeAll { $0.category != nil }
+        
         mockCategories.removeAll()
         return count
     }
