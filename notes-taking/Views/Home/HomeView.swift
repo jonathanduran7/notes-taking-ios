@@ -11,6 +11,9 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     
+    // MARK: - Dependencies
+    let router: AppRouter
+    
     // MARK: - ViewModel
     @State private var viewModel = HomeViewModel()
     
@@ -32,7 +35,7 @@ struct HomeView: View {
         }
         .onAppear {
             print("Pestaña Home cargada")
-            viewModel.configure(with: modelContext)
+            viewModel.configure(with: modelContext, router: router)
         }
     }
     
@@ -76,7 +79,7 @@ struct HomeView: View {
             Spacer().frame(height: 24)
             
             // Últimas notas
-            HistoryNotes()
+            HistoryNotes(router: router)
                 .padding(.horizontal)
             
             Spacer()
@@ -266,5 +269,5 @@ struct SearchResultItem: View {
 }
 
 #Preview {
-    HomeView()
+    HomeView(router: AppRouter.preview)
 }

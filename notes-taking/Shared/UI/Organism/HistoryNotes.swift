@@ -11,6 +11,9 @@ import SwiftData
 struct HistoryNotes: View {
     @Query(sort: \Notes.updatedAt, order: .reverse) private var notes: [Notes]
     
+    // MARK: - Dependencies
+    let router: AppRouter
+    
     var body: some View {
         VStack {
             HStack {
@@ -51,7 +54,7 @@ struct HistoryNotes: View {
             }
             
             Button(action: {
-                NotificationCenter.default.post(name: NSNotification.Name("SwitchToNotesTab"), object: nil)
+                router.navigateFromQuickAction(.createNote)
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "plus.circle.fill")
@@ -97,7 +100,7 @@ struct HistoryNotes: View {
                     Spacer()
                     
                     Button(action: {
-                        NotificationCenter.default.post(name: NSNotification.Name("SwitchToNotesTab"), object: nil)
+                        router.navigateFromSearch(to: note)
                     }) {
                         Image(systemName: "chevron.right")
                             .font(.caption)
@@ -114,7 +117,7 @@ struct HistoryNotes: View {
             // Botón "Ver todas las notas" si hay más de 3
             if notes.count > 3 {
                 Button(action: {
-                    NotificationCenter.default.post(name: NSNotification.Name("SwitchToNotesTab"), object: nil)
+                    router.navigateFromViewAll(section: "notas")
                 }) {
                     HStack {
                         Text("Ver todas las notas (\(notes.count))")
