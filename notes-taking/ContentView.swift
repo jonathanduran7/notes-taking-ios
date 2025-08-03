@@ -9,50 +9,47 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @State private var selectedTab = 0
+    @State private var router = AppRouter()
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: Binding(
+            get: { router.selectedTab.rawValue },
+            set: { router.selectedTab = AppRouter.AppTab(rawValue: $0) ?? .home }
+        )) {
             // Pestaña Home
-            HomeView()
+            HomeView(router: router)
                 .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Home")
+                    Image(systemName: AppRouter.AppTab.home.icon)
+                    Text(AppRouter.AppTab.home.title)
                 }
-                .tag(0)
+                .tag(AppRouter.AppTab.home.rawValue)
             
             // Pestaña Notas
-            NotesView()
+            NotesView(router: router)
                 .tabItem {
-                    Image(systemName: "note.text")
-                    Text("Notas")
+                    Image(systemName: AppRouter.AppTab.notes.icon)
+                    Text(AppRouter.AppTab.notes.title)
                 }
-                .tag(1)
+                .tag(AppRouter.AppTab.notes.rawValue)
             
             // Pestaña Categorías
-            CategoriesView()
+            CategoriesView(router: router)
                 .tabItem {
-                    Image(systemName: "folder.fill")
-                    Text("Categorías")
+                    Image(systemName: AppRouter.AppTab.categories.icon)
+                    Text(AppRouter.AppTab.categories.title)
                 }
-                .tag(2)
+                .tag(AppRouter.AppTab.categories.rawValue)
             
             // Pestaña Settings
-            SettingsView()
+            SettingsView(router: router)
                 .tabItem {
-                    Image(systemName: "gearshape.fill")
-                    Text("Ajustes")
+                    Image(systemName: AppRouter.AppTab.settings.icon)
+                    Text(AppRouter.AppTab.settings.title)
                 }
-                .tag(3)
+                .tag(AppRouter.AppTab.settings.rawValue)
         }
         .accentColor(.appAccent)
         .preferredColorScheme(.light)
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SwitchToNotesTab"))) { _ in
-            withAnimation(.easeInOut(duration: 0.3)) {
-                selectedTab = 1
-            }
-            print("🔄 Cambiando a la pestaña de Notas")
-        }
     }
 }
 
