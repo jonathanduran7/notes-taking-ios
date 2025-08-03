@@ -6,8 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
+
+    @Query(sort: \Category.createdAt, order: .reverse)
+    private var categories: [Category]
+
     var body: some View {
         VStack{
             TopBar(title: "Mis Notas")
@@ -18,8 +23,8 @@ struct HomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    ForEach(1...4, id: \.self) { card in
-                        Cards()
+                    ForEach(categories) { category in
+                        Cards(category: category)
                     }
                 }
                 .padding()
