@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct HistoryNotes: View {
     var body: some View {
@@ -22,7 +23,7 @@ struct HistoryNotes: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 10) {
                     ForEach(1...4, id: \.self) { card in
-                        NoteItem()
+                        NoteItem(note: Notes(title: "Note \(card)", content: "Content \(card)"), onEdit: {}, onDelete: {})
                     }
                 }
             }
