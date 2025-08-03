@@ -43,8 +43,10 @@ struct CategoriesView: View {
         .sheet(isPresented: $showingEditSheet) {
             editCategorySheet
         }
-        .alert("Eliminar Categoría", isPresented: $showingDeleteAlert) {
+        .alert("⚠️ Eliminar Categoría", isPresented: $showingDeleteAlert) {
             deleteAlert
+        } message: {
+            Text("Esta acción también eliminará todas las notas relacionadas con esta categoría. No se puede deshacer.")
         }
     }
     
