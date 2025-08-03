@@ -15,7 +15,7 @@ struct HomeView: View {
 
     var body: some View {
         VStack{
-            TopBar(title: "Mis Notas")
+            TopBar(title: "Home")
 
             SearchBar()
 
