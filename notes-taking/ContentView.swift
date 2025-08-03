@@ -46,6 +46,7 @@ struct ContentView: View {
                 .tag(3)
         }
         .accentColor(.appAccent)
+        .preferredColorScheme(.light)
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SwitchToNotesTab"))) { _ in
             withAnimation(.easeInOut(duration: 0.3)) {
                 selectedTab = 1
