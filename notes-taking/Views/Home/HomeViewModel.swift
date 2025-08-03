@@ -13,6 +13,7 @@ class HomeViewModel {
     
     // MARK: - Dependencies
     private var modelContext: ModelContext?
+    private var router: AppRouter?
     
     // MARK: - Data Queries
     private var _categories: [Category] = []
@@ -60,8 +61,9 @@ class HomeViewModel {
     init() {}
     
     // MARK: - Configuration
-    func configure(with context: ModelContext) {
+    func configure(with context: ModelContext, router: AppRouter) {
         self.modelContext = context
+        self.router = router
         fetchData()
     }
     
@@ -125,13 +127,11 @@ class HomeViewModel {
     
     // MARK: - Navigation
     func navigateToNotesTab() {
-        NotificationCenter.default.post(name: NSNotification.Name("SwitchToNotesTab"), object: nil)
-        print("🔍 Navegando a la pestaña de Notas")
+        router?.navigateToNotes()
     }
     
     func navigateToNoteDetail(_ note: Notes) {
-        NotificationCenter.default.post(name: NSNotification.Name("SwitchToNotesTab"), object: nil)
-        print("🔍 Navegando a nota: \(note.title)")
+        router?.navigateToNote(withId: note.id)
     }
     
     // MARK: - Helper Methods
