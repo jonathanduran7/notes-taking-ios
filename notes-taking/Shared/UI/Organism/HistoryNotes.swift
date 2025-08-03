@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct HistoryNotes: View {
+    @Query(sort: \Notes.updatedAt, order: .reverse) private var notes: [Notes]
     var body: some View {
         VStack {
             HStack {
@@ -22,8 +23,8 @@ struct HistoryNotes: View {
 
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 10) {
-                    ForEach(1...4, id: \.self) { card in
-                        NoteItem(note: Notes(title: "Note \(card)", content: "Content \(card)"), onEdit: {}, onDelete: {})
+                    ForEach(notes.prefix(3)) { note in
+                        NoteItem(note: note, onEdit: {}, onDelete: {})
                     }
                 }
             }
