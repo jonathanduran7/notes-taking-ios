@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Extensión de Color para el tema de la app
 extension Color {
     
-    // MARK: - Paleta de colores principal
+    // MARK: - Paleta de colores principal (compatibilidad con código existente)
     /// Sage Dark - Color principal de la app (#819A91)
     static let sageGreen = Color(red: 0.51, green: 0.60, blue: 0.57)
     
@@ -23,30 +23,37 @@ extension Color {
     /// Cream - Color de fondo principal (#EEEFE0)
     static let cream = Color(red: 0.93, green: 0.94, blue: 0.88)
     
-    // MARK: - Colores semánticos
-    /// Color de acento principal
-    static let appAccent = sageGreen
+    // MARK: - Colores semánticos (ahora dinámicos)
+    /// Color de acento principal - ahora dinámico según el tema
+    static var appAccent: Color {
+        AppTheme.Colors.accent(for: ThemeManager.shared.isDarkMode)
+    }
     
-    /// Color de fondo primario
-    static let appBackground = cream
+    /// Color de fondo primario - ahora dinámico según el tema
+    static var appBackground: Color {
+        AppTheme.Colors.backgroundPrimary(for: ThemeManager.shared.isDarkMode)
+    }
     
-    /// Color de superficie para cards
-    static let appSurface = cream
+    /// Color de superficie para cards - ahora dinámico según el tema
+    static var appSurface: Color {
+        AppTheme.Colors.surface(for: ThemeManager.shared.isDarkMode)
+    }
 }
 
-// MARK: - Gradientes del tema
+// MARK: - Gradientes del tema (ahora dinámicos)
 struct AppGradients {
-    /// Gradiente principal de sage medium a sage light
-    static let sagePrimary = LinearGradient(
-        gradient: Gradient(colors: [Color.sageMedium.opacity(0.3), Color.sageLight.opacity(0.5)]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    /// Gradiente principal - ahora dinámico según el tema
+    static var sagePrimary: LinearGradient {
+        AppTheme.Gradients.sagePrimary(for: ThemeManager.shared.isDarkMode)
+    }
     
-    /// Gradiente de fondo cream
-    static let creamBackground = LinearGradient(
-        gradient: Gradient(colors: [Color.cream, Color.cream.opacity(0.8)]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    /// Gradiente de fondo - ahora dinámico según el tema
+    static var backgroundGradient: LinearGradient {
+        AppTheme.Gradients.backgroundGradient(for: ThemeManager.shared.isDarkMode)
+    }
+    
+    /// Gradiente de fondo cream (compatibilidad con código existente)
+    static var creamBackground: LinearGradient {
+        AppTheme.Gradients.backgroundGradient(for: ThemeManager.shared.isDarkMode)
+    }
 }
