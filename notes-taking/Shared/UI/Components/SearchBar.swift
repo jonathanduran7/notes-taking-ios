@@ -13,6 +13,7 @@ struct SearchBar: View {
     let placeholder: String
     
     @FocusState private var isSearchFocused: Bool
+    @Environment(\.themeManager) private var themeManager
     
     init(searchText: Binding<String>, placeholder: String = "Buscar notas...", onSearchChanged: @escaping (String) -> Void = { _ in }) {
         self._searchText = searchText
@@ -25,19 +26,30 @@ struct SearchBar: View {
             // Ícono de búsqueda
             Image(systemName: "magnifyingglass")
                 .font(.title3)
-                .foregroundColor(searchText.isEmpty ? .gray : .sageGreen)
+                .foregroundColor(searchText.isEmpty ? 
+                    AppTheme.Colors.textSecondary(for: themeManager.isDarkMode) : 
+                    AppTheme.Colors.accent(for: themeManager.isDarkMode))
                 .animation(.easeInOut(duration: 0.2), value: searchText.isEmpty)
             
-            // Campo de texto
-            TextField(placeholder, text: $searchText)
-                .textFieldStyle(PlainTextFieldStyle())
-                .focused($isSearchFocused)
-                .onChange(of: searchText) { oldValue, newValue in
-                    onSearchChanged(newValue)
+            // Campo de texto con placeholder personalizado
+            ZStack(alignment: .leading) {
+                if searchText.isEmpty {
+                    Text(placeholder)
+                        .foregroundColor(AppTheme.Colors.textSecondary(for: themeManager.isDarkMode))
+                        .allowsHitTesting(false)
                 }
-                .onSubmit {
-                    isSearchFocused = false
-                }
+                
+                TextField("", text: $searchText)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .focused($isSearchFocused)
+                    .foregroundColor(AppTheme.Colors.textPrimary(for: themeManager.isDarkMode))
+                    .onChange(of: searchText) { oldValue, newValue in
+                        onSearchChanged(newValue)
+                    }
+                    .onSubmit {
+                        isSearchFocused = false
+                    }
+            }
             
             // Botón para limpiar
             if !searchText.isEmpty {
@@ -48,7 +60,7 @@ struct SearchBar: View {
                 }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title3)
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppTheme.Colors.textSecondary(for: themeManager.isDarkMode))
                 }
                 .transition(.scale.combined(with: .opacity))
             }
@@ -57,18 +69,22 @@ struct SearchBar: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.cream)
+                .fill(AppTheme.Colors.cardBackground(for: themeManager.isDarkMode))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            isSearchFocused ? Color.sageGreen : Color.sageLight,
+                            isSearchFocused ? 
+                                AppTheme.Colors.accent(for: themeManager.isDarkMode) : 
+                                AppTheme.Colors.backgroundSecondary(for: themeManager.isDarkMode),
                             lineWidth: isSearchFocused ? 2 : 1
                         )
                         .animation(.easeInOut(duration: 0.2), value: isSearchFocused)
                 )
         )
         .shadow(
-            color: isSearchFocused ? Color.sageGreen.opacity(0.1) : Color.gray.opacity(0.05),
+            color: isSearchFocused ? 
+                AppTheme.Colors.accent(for: themeManager.isDarkMode).opacity(0.1) : 
+                Color.gray.opacity(0.05),
             radius: isSearchFocused ? 6 : 2,
             x: 0,
             y: isSearchFocused ? 3 : 1
@@ -88,4 +104,6 @@ struct SearchBar: View {
         SearchBar(searchText: .constant("Ejemplo de búsqueda")) { _ in }
     }
     .padding()
+    .background(AppTheme.Colors.backgroundPrimary(for: false))
+    .environment(\.themeManager, ThemeManager.shared)
 }
