@@ -12,16 +12,40 @@ import SwiftUI
 class ThemeManager {
     static let shared = ThemeManager()
     
+    // MARK: - UserDefaults Key
+    private let themeKey = "app_theme_is_dark_mode"
+    
     var isDarkMode: Bool = false {
         didSet {
-            print("🎨 Tema cambiado a: \(isDarkMode ? "Oscuro" : "Claro")")
+            // Guardar en UserDefaults cada vez que cambie
+            UserDefaults.standard.set(isDarkMode, forKey: themeKey)
+            print("🎨 Tema cambiado a: \(isDarkMode ? "Oscuro" : "Claro") - Guardado en UserDefaults")
         }
     }
     
-    private init() {}
+    private init() {
+        // Cargar el tema guardado al inicializar
+        loadSavedTheme()
+    }
     
     func toggleTheme() {
         isDarkMode.toggle()
+    }
+    
+    // MARK: - Persistence Methods
+    private func loadSavedTheme() {
+        if UserDefaults.standard.object(forKey: themeKey) != nil {
+            isDarkMode = UserDefaults.standard.bool(forKey: themeKey)
+            print("📱 Tema cargado desde UserDefaults: \(isDarkMode ? "Oscuro" : "Claro")")
+        } else {
+            isDarkMode = false
+            print("📱 Primera vez usando la app - Tema por defecto: Claro")
+        }
+    }
+    
+    func resetToDefault() {
+        UserDefaults.standard.removeObject(forKey: themeKey)
+        isDarkMode = false
     }
 }
 
