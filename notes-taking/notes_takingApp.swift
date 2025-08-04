@@ -28,6 +28,7 @@ struct notes_takingApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(\.themeManager, ThemeManager.shared)
         }
         .modelContainer(sharedModelContainer)
     }
