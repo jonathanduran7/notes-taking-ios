@@ -18,8 +18,8 @@ class SettingsViewModel {
     // MARK: - Loading States
     let loadingManager = LoadingManager()
     
-    // MARK: - Theme State
-    var isDarkMode: Bool = false
+    // MARK: - Theme Manager
+    let themeManager = ThemeManager.shared
 
     // MARK: - Data Queries
     private var _categories: [Category] = []
@@ -185,7 +185,6 @@ class SettingsViewModel {
     }
 
     func toggleTheme() {
-        isDarkMode.toggle()
-        print("🎨 Tema cambiado a: \(isDarkMode ? "Oscuro" : "Claro")")
+        themeManager.toggleTheme()
     }
 }
