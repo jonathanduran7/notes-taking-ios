@@ -17,6 +17,9 @@ class SettingsViewModel {
 
     // MARK: - Loading States
     let loadingManager = LoadingManager()
+    
+    // MARK: - Theme State
+    var isDarkMode: Bool = false
 
     // MARK: - Data Queries
     private var _categories: [Category] = []
@@ -179,5 +182,10 @@ class SettingsViewModel {
     
     func getAppName() -> String {
         Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String ?? "Notes App"
+    }
+
+    func toggleTheme() {
+        isDarkMode.toggle()
+        print("🎨 Tema cambiado a: \(isDarkMode ? "Oscuro" : "Claro")")
     }
 }
