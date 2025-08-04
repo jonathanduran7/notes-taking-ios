@@ -7,11 +7,36 @@
 
 import SwiftUI
 
+// MARK: - Theme Manager
+@Observable
+class ThemeManager {
+    static let shared = ThemeManager()
+    
+    var isDarkMode: Bool = false {
+        didSet {
+            print("🎨 Tema cambiado a: \(isDarkMode ? "Oscuro" : "Claro")")
+        }
+    }
+    
+    private init() {}
+    
+    func toggleTheme() {
+        isDarkMode.toggle()
+    }
+}
+
+// MARK: - Theme Mode
+enum ThemeMode {
+    case light
+    case dark
+}
+
 /// Sistema de tema centralizado para toda la aplicación
 struct AppTheme {
     
     // MARK: - Paleta de colores principal
     struct Colors {
+        // MARK: - Colores base (sin tema específico)
         /// Sage Dark - Color principal de la app (#819A91)
         static let sageGreen = Color(red: 0.51, green: 0.60, blue: 0.57)
         
@@ -21,45 +46,90 @@ struct AppTheme {
         /// Sage Light - Color claro (#D1D8BE)
         static let sageLight = Color(red: 0.82, green: 0.85, blue: 0.75)
         
-        /// Cream - Color de fondo principal (#EEEFE0)
+        /// Cream - Color de fondo principal modo claro (#EEEFE0)
         static let cream = Color(red: 0.93, green: 0.94, blue: 0.88)
         
-        // MARK: - Colores derivados
-        /// Color de acento principal para elementos interactivos
-        static let accent = sageGreen
+        // MARK: - Colores modo oscuro
+        /// Fondo principal modo oscuro (#1C1C1E)
+        static let darkBackground = Color(red: 0.11, green: 0.11, blue: 0.12)
         
-        /// Color de fondo primario
-        static let backgroundPrimary = cream
+        /// Superficie modo oscuro (#2C2C2E)
+        static let darkSurface = Color(red: 0.17, green: 0.17, blue: 0.18)
         
-        /// Color de fondo secundario
-        static let backgroundSecondary = sageLight
+        /// Superficie secundaria modo oscuro (#38383A)
+        static let darkSurfaceSecondary = Color(red: 0.22, green: 0.22, blue: 0.23)
         
-        /// Color para elementos de superficie
-        static let surface = cream
+        /// Sage adaptado para modo oscuro
+        static let darkSageGreen = Color(red: 0.61, green: 0.70, blue: 0.67)
         
-        // MARK: - Colores semánticos
+        // MARK: - Colores dinámicos según el tema
+        static func accent(for isDarkMode: Bool) -> Color {
+            isDarkMode ? darkSageGreen : sageGreen
+        }
+        
+        static func backgroundPrimary(for isDarkMode: Bool) -> Color {
+            isDarkMode ? darkBackground : cream
+        }
+        
+        static func backgroundSecondary(for isDarkMode: Bool) -> Color {
+            isDarkMode ? darkSurface : sageLight
+        }
+        
+        static func surface(for isDarkMode: Bool) -> Color {
+            isDarkMode ? darkSurface : cream
+        }
+        
+        static func cardBackground(for isDarkMode: Bool) -> Color {
+            isDarkMode ? darkSurfaceSecondary : Color.white
+        }
+        
+        static func textPrimary(for isDarkMode: Bool) -> Color {
+            isDarkMode ? Color.white : Color.black
+        }
+        
+        static func textSecondary(for isDarkMode: Bool) -> Color {
+            isDarkMode ? Color.gray.opacity(0.8) : Color.gray
+        }
+        
+        // MARK: - Colores semánticos (sin cambio por tema)
         /// Color para elementos destructivos
         static let destructive = Color.red
-        
-        /// Color para texto secundario
-        static let textSecondary = Color.gray
     }
     
     // MARK: - Gradientes
     struct Gradients {
-        /// Gradiente principal de sage medium a sage light
-        static let sagePrimary = LinearGradient(
-            gradient: Gradient(colors: [Colors.sageMedium.opacity(0.3), Colors.sageLight.opacity(0.5)]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
         
-        /// Gradiente de fondo cream
-        static let creamBackground = LinearGradient(
-            gradient: Gradient(colors: [Colors.cream, Colors.cream.opacity(0.8)]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        static func sagePrimary(for isDarkMode: Bool) -> LinearGradient {
+            if isDarkMode {
+                return LinearGradient(
+                    gradient: Gradient(colors: [Colors.darkSageGreen.opacity(0.3), Colors.darkSurface.opacity(0.5)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            } else {
+                return LinearGradient(
+                    gradient: Gradient(colors: [Colors.sageMedium.opacity(0.3), Colors.sageLight.opacity(0.5)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        }
+        
+        static func backgroundGradient(for isDarkMode: Bool) -> LinearGradient {
+            if isDarkMode {
+                return LinearGradient(
+                    gradient: Gradient(colors: [Colors.darkBackground, Colors.darkBackground.opacity(0.8)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            } else {
+                return LinearGradient(
+                    gradient: Gradient(colors: [Colors.cream, Colors.cream.opacity(0.8)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        }
     }
     
     // MARK: - Sombras
@@ -127,14 +197,14 @@ extension View {
         // Gradientes
         VStack(spacing: 10) {
             Rectangle()
-                .fill(AppTheme.Gradients.sagePrimary)
+                .fill(AppTheme.Gradients.sagePrimary(for: false))
                 .frame(height: 50)
                 .overlay(Text("Sage Primary Gradient").font(.caption).foregroundColor(.white))
             
             Rectangle()
-                .fill(AppTheme.Gradients.creamBackground)
+                .fill(AppTheme.Gradients.backgroundGradient(for: false))
                 .frame(height: 50)
-                .overlay(Text("Cream Background Gradient").font(.caption))
+                .overlay(Text("Background Gradient").font(.caption))
                 .border(Color.gray, width: 1)
         }
         
@@ -151,4 +221,16 @@ extension View {
     }
     .padding()
     .background(Color.gray.opacity(0.1))
+}
+
+// MARK: - Environment Key para ThemeManager
+private struct ThemeManagerKey: EnvironmentKey {
+    static let defaultValue = ThemeManager.shared
+}
+
+extension EnvironmentValues {
+    var themeManager: ThemeManager {
+        get { self[ThemeManagerKey.self] }
+        set { self[ThemeManagerKey.self] = newValue }
+    }
 }
