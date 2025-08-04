@@ -10,6 +10,7 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeManager) private var themeManager
     @State private var dependencies: DependencyContainer?
     
     var body: some View {
@@ -55,12 +56,15 @@ struct ContentView: View {
                         }
                         .tag(AppRouter.AppTab.settings.rawValue)
                 }
-                .accentColor(.appAccent)
-                .preferredColorScheme(.light)
+                .accentColor(AppTheme.Colors.accent(for: themeManager.isDarkMode))
+                .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
+                .background(AppTheme.Colors.backgroundPrimary(for: themeManager.isDarkMode))
             } else {
                 // Loading state while dependencies are being initialized
                 ProgressView("Inicializando...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppTheme.Colors.backgroundPrimary(for: themeManager.isDarkMode))
+                    .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
             }
         }
         .onAppear {
