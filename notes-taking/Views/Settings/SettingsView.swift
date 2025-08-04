@@ -29,6 +29,8 @@ struct SettingsView: View {
                         appInfoSection
                         
                         statisticsSection
+
+                        optionsSection
                         
                         dangerZoneSection
                         
@@ -197,6 +199,51 @@ struct SettingsView: View {
             }
             Button("Cancelar", role: .cancel) { }
         }
+    }
+
+    private var optionsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Opciones")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            VStack(spacing: 12) {
+                themeToggleRow
+            }
+        }
+    }
+    
+    private var themeToggleRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: viewModel.isDarkMode ? "moon.fill" : "sun.max.fill")
+                .font(.title3)
+                .foregroundColor(viewModel.isDarkMode ? .blue : .orange)
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Tema oscuro")
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+                
+                Text(viewModel.isDarkMode ? "Activado" : "Desactivado")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            
+            Spacer()
+            
+            Toggle("", isOn: $viewModel.isDarkMode)
+                .toggleStyle(SwitchToggleStyle(tint: .sageGreen))
+                .onChange(of: viewModel.isDarkMode) { _, _ in
+                    viewModel.toggleTheme()
+                }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
     }
 }
 
