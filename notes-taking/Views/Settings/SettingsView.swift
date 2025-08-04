@@ -10,6 +10,7 @@ import SwiftData
 
 struct SettingsView: View {
     @Environment(\.dependencies) private var dependencies
+    @Environment(\.themeManager) private var themeManager
     
     // MARK: - ViewModel
     @State private var viewModel = SettingsViewModel()
@@ -95,7 +96,7 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(Color.cream)
+        .background(AppTheme.Colors.surface(for: themeManager.isDarkMode))
         .cornerRadius(16)
         .shadow(color: .gray.opacity(0.1), radius: 4, x: 0, y: 2)
     }
@@ -216,32 +217,32 @@ struct SettingsView: View {
     
     private var themeToggleRow: some View {
         HStack(spacing: 12) {
-            Image(systemName: viewModel.isDarkMode ? "moon.fill" : "sun.max.fill")
+            Image(systemName: viewModel.themeManager.isDarkMode ? "moon.fill" : "sun.max.fill")
                 .font(.title3)
-                .foregroundColor(viewModel.isDarkMode ? .blue : .orange)
+                .foregroundColor(viewModel.themeManager.isDarkMode ? .blue : .orange)
                 .frame(width: 24)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text("Tema oscuro")
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundColor(AppTheme.Colors.textPrimary(for: viewModel.themeManager.isDarkMode))
                 
-                Text(viewModel.isDarkMode ? "Activado" : "Desactivado")
+                Text(viewModel.themeManager.isDarkMode ? "Activado" : "Desactivado")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(AppTheme.Colors.textSecondary(for: viewModel.themeManager.isDarkMode))
             }
             
             Spacer()
             
-            Toggle("", isOn: $viewModel.isDarkMode)
-                .toggleStyle(SwitchToggleStyle(tint: .sageGreen))
-                .onChange(of: viewModel.isDarkMode) { _, _ in
-                    viewModel.toggleTheme()
-                }
+            Toggle("", isOn: Binding(
+                get: { viewModel.themeManager.isDarkMode },
+                set: { _ in viewModel.toggleTheme() }
+            ))
+                .toggleStyle(SwitchToggleStyle(tint: AppTheme.Colors.accent(for: viewModel.themeManager.isDarkMode)))
         }
         .padding()
-        .background(Color.white)
+        .background(AppTheme.Colors.cardBackground(for: viewModel.themeManager.isDarkMode))
         .cornerRadius(12)
         .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
     }
@@ -272,7 +273,7 @@ struct StatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(Color.cream)
+        .background(AppTheme.Colors.surface(for: ThemeManager.shared.isDarkMode))
         .cornerRadius(12)
         .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
     }
@@ -312,7 +313,7 @@ struct DangerButton: View {
                     .foregroundColor(.gray)
             }
             .padding()
-            .background(isEnabled ? Color.white : Color.gray.opacity(0.1))
+            .background(isEnabled ? AppTheme.Colors.cardBackground(for: ThemeManager.shared.isDarkMode) : Color.gray.opacity(0.1))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
