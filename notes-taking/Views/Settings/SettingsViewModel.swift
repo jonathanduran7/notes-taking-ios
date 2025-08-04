@@ -187,4 +187,11 @@ class SettingsViewModel {
     func toggleTheme() {
         themeManager.toggleTheme()
     }
+    
+    // MARK: - Debug Methods
+    func getCurrentThemeInfo() -> String {
+        let savedValue = UserDefaults.standard.object(forKey: "app_theme_is_dark_mode") != nil
+        let currentTheme = themeManager.isDarkMode ? "Oscuro" : "Claro"
+        return "Tema actual: \(currentTheme) | Guardado: \(savedValue ? "Sí" : "No")"
+    }
 }
