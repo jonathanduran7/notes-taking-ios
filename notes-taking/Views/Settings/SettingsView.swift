@@ -228,7 +228,7 @@ struct SettingsView: View {
                     .fontWeight(.medium)
                     .foregroundColor(AppTheme.Colors.textPrimary(for: viewModel.themeManager.isDarkMode))
                 
-                Text(viewModel.themeManager.isDarkMode ? "Activado" : "Desactivado")
+                Text(viewModel.themeManager.isDarkMode ? "Activado • Se guarda automáticamente" : "Desactivado • Se guarda automáticamente")
                     .font(.caption)
                     .foregroundColor(AppTheme.Colors.textSecondary(for: viewModel.themeManager.isDarkMode))
             }
