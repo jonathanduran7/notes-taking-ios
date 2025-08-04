@@ -26,7 +26,7 @@ struct TopBar: View {
                         Text(title)
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                         
                         // Subtle subtitle
                         Text(getCurrentGreeting())

@@ -82,14 +82,14 @@ struct HistoryNotes: View {
                         Text(note.title)
                             .font(.body)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                             .lineLimit(1)
                         
                         if !note.content.isEmpty {
                             Text(note.content)
                                 .font(.caption)
-                                .foregroundColor(.gray)
                                 .lineLimit(2)
+                                .foregroundColor(AppTheme.Colors.textSecondary(for: ThemeManager.shared.isDarkMode))
                         }
                         
                         Text(note.updatedAt.formatted(date: .abbreviated, time: .omitted))

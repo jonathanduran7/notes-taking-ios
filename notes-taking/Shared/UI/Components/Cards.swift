@@ -39,7 +39,7 @@ struct Cards: View {
             Text(category.name)
                 .font(.body)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundColor(.black)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
